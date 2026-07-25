@@ -6,4 +6,7 @@ class FimfictionInterfaceAction(InterfaceAction):
 
 
 def genesis(self):
+    icon = get_icons('images/icon.png')
+    self.quaction.setIcon(icon)
+
     ...
