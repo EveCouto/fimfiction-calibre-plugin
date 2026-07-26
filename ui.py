@@ -16,7 +16,7 @@ class InterfacePlugin(InterfaceAction):
         self.qaction.setIcon(icon)
 
         # Main Button Action
-        self.qaction.triggered.connect(self.test_print)
+        self.qaction.triggered.connect(self.open_book_merge)
 
         # Sub menu
         self.menu = QMenu(self.gui)
@@ -25,12 +25,20 @@ class InterfacePlugin(InterfaceAction):
         # Sub menu item 1
         self.create_menu_action(
             self.menu,
-            unique_name="item1",
-            text="item1",
-            triggered=self.item1
+            unique_name="image_fix",
+            text="Fix Images",
+            triggered=self.open_image_fix
         )
 
         # Sub menu item 2
+        self.create_menu_action(
+            self.menu,
+            unique_name="merge_books",
+            text="Merge",
+            triggered=self.open_book_merge
+        )
+
+        # Sub menu item 3
         self.create_menu_action(
             self.menu,
             unique_name="config_plugin",
@@ -38,11 +46,27 @@ class InterfacePlugin(InterfaceAction):
             triggered=self.open_config
         )
 
-    def test_print(self):
+    def open_image_fix(self):
+        # from calibre_plugins.fimfic_fix.main import image_fix
         pass
 
-    def item1(self):
-        pass
+    def open_book_merge(self):
+        # from calibre_plugins.fimfic_fix.main import book_merge
+        from calibre.gui2 import info_dialog, error_dialog
+
+        rows = self.gui.library_view.selectionModel().selectedRows()
+        if not rows or len(rows) == 0:
+            return error_dialog(self.gui, 'Error',
+                                'Nothing Selected', show=True)
+        elif len(rows) >= 2:
+            return error_dialog(self.gui, 'Error',
+                                'More than 1 Book Selected', show=True)
+
+        row = rows[0]
+        book_id = self.gui.library_view.model().id(row)
+        db = self.gui.current_db.new_api
+        mi = db.get_metadata(book_id)
+        info_dialog(self.gui, "mergin?", f"merge {mi.title}", show=True)
 
     def open_config(self):
         base_plugin_object = self.interface_action_base_plugin
