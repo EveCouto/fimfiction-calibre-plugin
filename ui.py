@@ -53,7 +53,8 @@ class InterfacePlugin(InterfaceAction):
         pass
 
     def open_book_merge(self):
-        from calibre_plugins.fimfic_fix.main import merge_books
+        from calibre_plugins.fimfic_fix.merge_books import merge_books
+        from calibre_plugins.fimfic_fix.fix_images import fix_images
         from calibre.gui2 import info_dialog, error_dialog
         from calibre.ptempfile import TemporaryDirectory
         from qt.core import QFileDialog
@@ -97,10 +98,15 @@ class InterfacePlugin(InterfaceAction):
             db.add_format(book_id, "EPUB", merged_epub, replace=True)
 
         # Simple print TODO will remove later
-        info_dialog(
-            self.gui, "dialog",
-            f"{filename}, {temp_epub}",
-            show=True)
+        if prefs["do_backups"]:
+            dialog_str = (
+                f"Book: '{mi.title}' has been merged with, '{merge_path}'.\n" +
+                f"\nBackup of the original saved to '{prefs["backup_path"]}'")
+        else:
+            dialog_str = (
+                f"Book: '{mi.title}' has been merged with, '{merge_path}'.")
+
+        info_dialog(self.gui, "Book Merged!", dialog_str, show=True)
 
     def open_config(self):
         base_plugin_object = self.interface_action_base_plugin
