@@ -146,7 +146,7 @@ def update_zip(in_zip_path: str, out_zip_path: str,
             name = os.path.basename(link)
             if name not in in_zip.namelist():
                 try:
-                    file = urllib.request.urlopen(link).read()
+                    file = urllib.request.urlopen(link, timeout=5).read()
                 except urllib.error.HTTPError:
                     pass
                 out_zip.writestr(f"{"images/" + name}", file)
@@ -156,8 +156,8 @@ def fix_images(temp_dir: str, book_path: str,
                backup: bool, backup_path: str) -> str:
 
     # Temp path is where the fixed epub will be
-    temp_file = "temp.epub"
-    temp_path = os.path.join(temp_dir, temp_file)
+    temp_file = os.path.basename(book_path)
+    temp_path = os.path.join(temp_dir, "temp-" + temp_file)
     if os.path.exists(temp_path):
         os.remove(temp_path)
 

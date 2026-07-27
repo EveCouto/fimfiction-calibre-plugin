@@ -9,8 +9,6 @@ class InterfacePlugin(InterfaceAction):
                    None,
                    'Merge Selected Book',
                    None)
-    
-    
 
     def genesis(self):
         # Icons
@@ -29,7 +27,7 @@ class InterfacePlugin(InterfaceAction):
             self.menu,
             unique_name="image_fix",
             text="Fix Images",
-            triggered=self.open_image_fix
+            triggered=self.start_image_fix
         )
 
         # Sub menu item 2
@@ -48,51 +46,107 @@ class InterfacePlugin(InterfaceAction):
             triggered=self.open_config
         )
 
-    def open_image_fix(self):
-        from calibre_plugins.fimfic_fix.fix_images import fix_images
-        from calibre.gui2 import info_dialog, error_dialog
-        from calibre.ptempfile import TemporaryDirectory
+    def start_image_fix(self):
+        from calibre.gui2.threaded_jobs import ThreadedJob
+        import tempfile
         from calibre_plugins.fimfic_fix.config import prefs
-        import os
 
-        # Gets selected items in Calibre
+        # Get selected books in library
         rows = self.gui.library_view.selectionModel().selectedRows()
-        if not rows or len(rows) == 0:
-            return error_dialog(
-                self.gui, 'Error', 'Nothing Selected', show=True)
 
-        book_ids = list(map(self.gui.library_view.model().id, rows))
-        db = self.gui.current_db.new_api
+        if not rows:
+            return
 
-        with TemporaryDirectory() as tdir:
-            for book_id in book_ids:
-                epub_path = db.format_abspath(book_id, "EPUB")
-                filename = os.path.basename(epub_path)
-                temp_epub = os.path.join(tdir, filename)
-                db.copy_format_to(book_id, "EPUB", temp_epub)
+        book_ids = [
+            self.gui.library_view.model().id(row.row())
+            for row in rows
+        ]
 
-                # Merges the books
-                fixed_epub = fix_images(
-                    tdir, temp_epub,
-                    prefs["do_backups"], prefs["backup_path"])
+        backup = prefs["do_backups"]
+        backup_path = prefs["backup_path"]
 
-                db.add_format(book_id, "EPUB", fixed_epub, replace=True)
+        tdir = tempfile.TemporaryDirectory()
 
-        # Sets dialog string
-        if prefs["do_backups"]:
-            dialog_str = (
-                f"{len(rows)} books have had their images fixed.\n\n" +
-                f"Backups of the originals saved to '{prefs["backup_path"]}'" +
-                "\n\nBooks Fixed:\n")
-        else:
-            dialog_str = (
-                f"{len(rows)} books have fixed images.\n\nBooks fixed:\n")
+        job = ThreadedJob(
+            "fimfic_fix_fix_images",
+            "Fixing images",
+            self.run_image_fix,
+            (tdir, book_ids, backup, backup_path),
+            {},
+            self.image_fix_finished
+        )
 
-        # Adds all the book titles to the dialog
+        # Keep temp directory alive
+        job.tdir = tdir
+
+        self.gui.job_manager.run_threaded_job(job)
+
+    def run_image_fix(tdir, book_ids, backup, backup_path, **_):
+        import os
+        import shutil
+        from calibre_plugins.fimfic_fix.fix_images import fix_images
+
+        db = self.gui.current_db
+
+        results = []
+
         for book_id in book_ids:
-            dialog_str += f"{db.get_metadata(book_id).title}\n"
 
-        info_dialog(self.gui, "Images Fixed!", dialog_str, show=True)
+            # Get EPUB location from calibre library
+            epub_path = db.format_abspath(
+                book_id,
+                "EPUB"
+            )
+
+            if not epub_path:
+                continue
+
+            # Make a working copy
+            temp_epub = os.path.join(
+                tdir.name,
+                f"{book_id}.epub"
+            )
+
+            shutil.copy2(epub_path, temp_epub)
+
+            # Run your fixer
+            fixed_path = fix_images(
+                tdir.name,
+                temp_epub,
+                backup,
+                backup_path
+            )
+
+            # Replace calibre's EPUB
+            with open(fixed_path, "rb") as f:
+                db.add_format(
+                    book_id,
+                    "EPUB",
+                    f,
+                    replace=True
+                )
+
+            results.append(book_id)
+
+        return results
+
+    def image_fix_finished(self, job):
+        from calibre.gui2 import error_dialog, info_dialog
+
+        if job.failed:
+            error_dialog(
+                self.gui,
+                "Fix Images Failed",
+                job.error,
+                det_msg=job.traceback
+            )
+            return
+
+        info_dialog(
+            self.gui,
+            "Fix Images",
+            "Finished fixing selected books."
+        )
 
     def open_book_merge(self):
         from calibre_plugins.fimfic_fix.merge_books import merge_books
@@ -124,25 +178,28 @@ class InterfacePlugin(InterfaceAction):
         if not merge_path:
             return error_dialog(
                 self.gui, 'Error', 'No File Selected', show=True)
+        try:
+            with TemporaryDirectory() as tdir:
+                epub_path = db.format_abspath(book_id, "EPUB")
+                filename = os.path.basename(epub_path)
+                temp_epub = os.path.join(tdir, filename)
+                db.copy_format_to(book_id, "EPUB", temp_epub)
 
-        with TemporaryDirectory() as tdir:
-            epub_path = db.format_abspath(book_id, "EPUB")
-            filename = os.path.basename(epub_path)
-            temp_epub = os.path.join(tdir, filename)
-            db.copy_format_to(book_id, "EPUB", temp_epub)
+                # Merges the books
+                merged_epub = merge_books(
+                    tdir, temp_epub, merge_path,
+                    prefs["do_backups"], prefs["backup_path"])
 
-            # Merges the books
-            merged_epub = merge_books(
-                tdir, temp_epub, merge_path,
-                prefs["do_backups"], prefs["backup_path"])
-
-            db.add_format(book_id, "EPUB", merged_epub, replace=True)
+                db.add_format(book_id, "EPUB", merged_epub, replace=True)
+        except Exception as e:
+            return error_dialog(
+                self.gui, 'Error', f'Error: {e}', show=True)
 
         # Simple print TODO will remove later
         if prefs["do_backups"]:
             dialog_str = (
                 f"Book: '{mi.title}' has been merged with, '{merge_path}'.\n" +
-                f"\nBackup of the original saved to '{prefs["backup_path"]}'")
+                f"\nBackup of the original saved to '{prefs['backup_path']}'")
         else:
             dialog_str = (
                 f"Book: '{mi.title}' has been merged with, '{merge_path}'.")
