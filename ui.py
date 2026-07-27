@@ -49,12 +49,53 @@ class InterfacePlugin(InterfaceAction):
         )
 
     def open_image_fix(self):
-        # from calibre_plugins.fimfic_fix.main import image_fix
-        pass
+        from calibre_plugins.fimfic_fix.fix_images import fix_images
+        from calibre.gui2 import info_dialog, error_dialog
+        from calibre.ptempfile import TemporaryDirectory
+        from calibre_plugins.fimfic_fix.config import prefs
+        import os
+
+        # Gets selected items in Calibre
+        rows = self.gui.library_view.selectionModel().selectedRows()
+        if not rows or len(rows) == 0:
+            return error_dialog(
+                self.gui, 'Error', 'Nothing Selected', show=True)
+
+        book_ids = list(map(self.gui.library_view.model().id, rows))
+        db = self.gui.current_db.new_api
+
+        with TemporaryDirectory() as tdir:
+            for book_id in book_ids:
+                epub_path = db.format_abspath(book_id, "EPUB")
+                filename = os.path.basename(epub_path)
+                temp_epub = os.path.join(tdir, filename)
+                db.copy_format_to(book_id, "EPUB", temp_epub)
+
+                # Merges the books
+                fixed_epub = fix_images(
+                    tdir, temp_epub,
+                    prefs["do_backups"], prefs["backup_path"])
+
+                db.add_format(book_id, "EPUB", fixed_epub, replace=True)
+
+        # Sets dialog string
+        if prefs["do_backups"]:
+            dialog_str = (
+                f"{len(rows)} books have had their images fixed.\n\n" +
+                f"Backups of the originals saved to '{prefs["backup_path"]}'" +
+                "\n\nBooks Fixed:\n")
+        else:
+            dialog_str = (
+                f"{len(rows)} books have fixed images.\n\nBooks fixed:\n")
+
+        # Adds all the book titles to the dialog
+        for book_id in book_ids:
+            dialog_str += f"{db.get_metadata(book_id).title}\n"
+
+        info_dialog(self.gui, "Images Fixed!", dialog_str, show=True)
 
     def open_book_merge(self):
         from calibre_plugins.fimfic_fix.merge_books import merge_books
-        from calibre_plugins.fimfic_fix.fix_images import fix_images
         from calibre.gui2 import info_dialog, error_dialog
         from calibre.ptempfile import TemporaryDirectory
         from qt.core import QFileDialog
