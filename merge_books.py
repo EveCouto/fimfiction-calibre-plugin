@@ -1,6 +1,6 @@
 
 import os
-import argparse
+import shutil
 import zipfile
 import xml.etree.ElementTree as ET
 from datetime import datetime
@@ -120,6 +120,7 @@ def merge_books(temp_dir: str, original_book_path: str, merge_book_path: str,
         safe_loc = os.path.join(
             backup_path, os.path.basename(original_book_path))
         safe_loc = safe_loc.replace(".epub", "")
-        safe_loc = safe_loc + "-" + now + ".epub"
+        safe_loc = safe_loc + "-" + now + "-bk.epub"
+        shutil.copy2(original_book_path, safe_loc)
 
     return temp_path
