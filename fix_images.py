@@ -4,7 +4,7 @@ import re
 import urllib.parse
 import urllib.request
 import shutil
-import datetime
+from datetime import datetime
 
 
 def scan_zip(zip_path: str, file_ext: str,
