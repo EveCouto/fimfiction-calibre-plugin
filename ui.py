@@ -9,6 +9,8 @@ class InterfacePlugin(InterfaceAction):
                    None,
                    'Merge Selected Book',
                    None)
+    
+    
 
     def genesis(self):
         # Icons
@@ -51,22 +53,54 @@ class InterfacePlugin(InterfaceAction):
         pass
 
     def open_book_merge(self):
-        # from calibre_plugins.fimfic_fix.main import book_merge
+        from calibre_plugins.fimfic_fix.main import merge_books
         from calibre.gui2 import info_dialog, error_dialog
+        from calibre.ptempfile import TemporaryDirectory
+        from qt.core import QFileDialog
+        from calibre_plugins.fimfic_fix.config import prefs
+        import os
 
+        # Gets selected items in Calibre
         rows = self.gui.library_view.selectionModel().selectedRows()
+        # Ensures only 1 item is slected for merge
         if not rows or len(rows) == 0:
-            return error_dialog(self.gui, 'Error',
-                                'Nothing Selected', show=True)
+            return error_dialog(
+                self.gui, 'Error', 'Nothing Selected', show=True)
         elif len(rows) >= 2:
-            return error_dialog(self.gui, 'Error',
-                                'More than 1 Book Selected', show=True)
+            return error_dialog(
+                self.gui, 'Error', 'More than 1 Book Selected', show=True)
 
+        # Get info on selected item
         row = rows[0]
         book_id = self.gui.library_view.model().id(row)
         db = self.gui.current_db.new_api
         mi = db.get_metadata(book_id)
-        info_dialog(self.gui, "mergin?", f"merge {mi.title}", show=True)
+
+        # Gets merge path
+        merge_path, _ = QFileDialog.getOpenFileName(
+            self.gui, "Select EPUB", "", "EPUB files (*.epub)")
+        if not merge_path:
+            return error_dialog(
+                self.gui, 'Error', 'No File Selected', show=True)
+
+        with TemporaryDirectory() as tdir:
+            epub_path = db.format_abspath(book_id, "EPUB")
+            filename = os.path.basename(epub_path)
+            temp_epub = os.path.join(tdir, filename)
+            db.copy_format_to(book_id, "EPUB", temp_epub)
+
+            # Merges the books
+            merged_epub = merge_books(
+                tdir, temp_epub, merge_path,
+                prefs["do_backups"], prefs["backup_path"])
+
+            db.add_format(book_id, "EPUB", merged_epub, replace=True)
+
+        # Simple print TODO will remove later
+        info_dialog(
+            self.gui, "dialog",
+            f"{filename}, {temp_epub}",
+            show=True)
 
     def open_config(self):
         base_plugin_object = self.interface_action_base_plugin
@@ -77,4 +111,4 @@ class InterfacePlugin(InterfaceAction):
         from calibre_plugins.fimfic_fix.config import prefs
         # In an actual non trivial plugin, you would probably need to
         # do something based on the settings in prefs
-        prefs
+        self.prefs = prefs
