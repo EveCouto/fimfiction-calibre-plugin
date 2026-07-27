@@ -114,7 +114,7 @@ def merge_books(temp_dir: str, original_book_path: str, merge_book_path: str,
     # Merges the files into temp_path
     merge_epub(original_book_path, merge_book_path, temp_path)
 
-    # Do backups here: TODO
+    # Backups
     if backup:
         now = datetime.now().strftime(r"%Y-%m-%d-%H-%M-%S")
         safe_loc = os.path.join(
