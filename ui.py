@@ -35,7 +35,7 @@ class InterfacePlugin(InterfaceAction):
         self.create_menu_action(
             self.menu,
             unique_name="merge_books",
-            text="Merge",
+            text="Merge Books",
             triggered=self.open_book_merge
         )
 
@@ -131,11 +131,16 @@ class InterfacePlugin(InterfaceAction):
                         log(f"Completed file: '{epub_name}'")
                 else:
                     if log:
-                        log(f"File Not Updated: '{epub_name}'")
+                        log(f"File Unchanged: '{epub_name}'")
 
             # Completion Log
-            if prefs["do_backups"] and log:
-                log(f"\nBackups found at {prefs["backup_path"]}")
+            if log:
+                log("-" * 150)
+                if prefs["do_backups"]:
+                    log("Finished job: Fixing Images\n" +
+                        f"Backups made at {prefs["backup_path"]}")
+                else:
+                    log("Finished job: Fixing Images")
 
         return
 
@@ -184,9 +189,12 @@ class InterfacePlugin(InterfaceAction):
         db = self.gui.current_db.new_api
         mi = db.get_metadata(book_id)
 
-        # Gets merge path
+        # Gets merge path, opens to download folder
         merge_path, _ = QFileDialog.getOpenFileName(
-            self.gui, "Select EPUB", "", "EPUB files (*.epub)")
+            self.gui,
+            "Select EPUB",
+            os.path.expanduser("~/Downloads"),
+            "EPUB files (*.epub)")
         if not merge_path:
             return error_dialog(
                 self.gui, 'Error', 'No File Selected', show=True)
@@ -208,14 +216,17 @@ class InterfacePlugin(InterfaceAction):
             return error_dialog(
                 self.gui, 'Error', f'Error: {e}', show=True)
 
+        if prefs["do_auto_fix"]:
+            self.start_image_fix()
+
         # Simple dialog on completion
+        dialog_str = (
+            f"Book: '{mi.title}' has been merged with, '{merge_path}'.\n")
         if prefs["do_backups"]:
-            dialog_str = (
-                f"Book: '{mi.title}' has been merged with, '{merge_path}'.\n" +
-                f"\nBackup of the original saved to '{prefs['backup_path']}'")
-        else:
-            dialog_str = (
-                f"Book: '{mi.title}' has been merged with, '{merge_path}'.")
+            dialog_str += f"\nBackup saved to '{prefs['backup_path']}'\n"
+        if prefs["do_auto_fix"]:
+            dialog_str += (f"\nFix Images ran on '{mi.title}', " +
+                           "check jobs to see progress\n")
 
         info_dialog(self.gui, "Book Merged!", dialog_str, show=True)
 
