@@ -108,7 +108,8 @@ class InterfacePlugin(InterfaceAction):
                 if notifications:
                     notifications.put(
                         (float(index/len(book_ids)),
-                         f"Processing: '{epub_name}'"))
+                         f"Fixing file {index+1} / {len(book_ids)}: " +
+                         f"'{epub_name}'"))
 
                 if log:
                     log("-" * 150)
