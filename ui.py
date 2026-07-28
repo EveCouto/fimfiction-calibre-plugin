@@ -48,105 +48,70 @@ class InterfacePlugin(InterfaceAction):
 
     def start_image_fix(self):
         from calibre.gui2.threaded_jobs import ThreadedJob
-        import tempfile
-        from calibre_plugins.fimfic_fix.config import prefs
+        from calibre.gui2 import error_dialog
 
         # Get selected books in library
         rows = self.gui.library_view.selectionModel().selectedRows()
 
         if not rows:
-            return
+            return error_dialog(
+                            self.gui, 'Error', 'Nothing Selected', show=True)
 
-        book_ids = [
-            self.gui.library_view.model().id(row.row())
-            for row in rows
-        ]
-
-        backup = prefs["do_backups"]
-        backup_path = prefs["backup_path"]
-
-        tdir = tempfile.TemporaryDirectory()
+        book_ids = list(map(self.gui.library_view.model().id, rows))
 
         job = ThreadedJob(
             "fimfic_fix_fix_images",
             "Fixing images",
             self.run_image_fix,
-            (tdir, book_ids, backup, backup_path),
+            (book_ids,),
             {},
             self.image_fix_finished
         )
 
-        # Keep temp directory alive
-        job.tdir = tdir
-
         self.gui.job_manager.run_threaded_job(job)
 
-    def run_image_fix(tdir, book_ids, backup, backup_path, **_):
+    def run_image_fix(self, book_ids, log=None, notifiations=None, **_):
         import os
-        import shutil
         from calibre_plugins.fimfic_fix.fix_images import fix_images
+        from calibre.ptempfile import TemporaryDirectory
+        from calibre_plugins.fimfic_fix.config import prefs
 
-        db = self.gui.current_db
+        db = self.gui.current_db.new_api
+        with TemporaryDirectory() as tdir:
+            for index, book_id in enumerate(book_ids):
+                epub_name = os.path.basename(db.format_abspath(book_id,
+                                                               "EPUB"))
+                if notifiations:
+                    notifiations.put((0, f"Processing: {epub_name}"))
 
-        results = []
+                if log:
+                    log(f"Started file: {epub_name}")
 
-        for book_id in book_ids:
+                temp_epub = os.path.join(tdir, epub_name)
+                db.copy_format_to(book_id, "EPUB", temp_epub)
 
-            # Get EPUB location from calibre library
-            epub_path = db.format_abspath(
-                book_id,
-                "EPUB"
-            )
+                # fixes the book
+                fixed_epub = fix_images(
+                    tdir, temp_epub,
+                    prefs["do_backups"], prefs["backup_path"])
 
-            if not epub_path:
-                continue
+                db.add_format(book_id, "EPUB", fixed_epub, replace=True)
+                if log:
+                    log(f"Completed file: {epub_name}")
+            if prefs["do_backups"] and log:
+                log(f"\nBackups found at {prefs["backup_path"]}")
 
-            # Make a working copy
-            temp_epub = os.path.join(
-                tdir.name,
-                f"{book_id}.epub"
-            )
-
-            shutil.copy2(epub_path, temp_epub)
-
-            # Run your fixer
-            fixed_path = fix_images(
-                tdir.name,
-                temp_epub,
-                backup,
-                backup_path
-            )
-
-            # Replace calibre's EPUB
-            with open(fixed_path, "rb") as f:
-                db.add_format(
-                    book_id,
-                    "EPUB",
-                    f,
-                    replace=True
-                )
-
-            results.append(book_id)
-
-        return results
+        return
 
     def image_fix_finished(self, job):
-        from calibre.gui2 import error_dialog, info_dialog
+        from calibre.gui2 import error_dialog
 
         if job.failed:
-            error_dialog(
-                self.gui,
-                "Fix Images Failed",
-                job.error,
-                det_msg=job.traceback
-            )
+            error_dialog(self.gui, "Fix Images Failed")
             return
 
-        info_dialog(
-            self.gui,
-            "Fix Images",
-            "Finished fixing selected books."
-        )
+        if job.abort:
+            return
 
     def open_book_merge(self):
         from calibre_plugins.fimfic_fix.merge_books import merge_books

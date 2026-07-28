@@ -146,7 +146,7 @@ def update_zip(in_zip_path: str, out_zip_path: str,
             name = os.path.basename(link)
             if name not in in_zip.namelist():
                 try:
-                    file = urllib.request.urlopen(link, timeout=5).read()
+                    file = urllib.request.urlopen(link).read()
                 except urllib.error.HTTPError:
                     pass
                 out_zip.writestr(f"{"images/" + name}", file)
