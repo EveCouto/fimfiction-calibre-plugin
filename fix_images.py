@@ -159,13 +159,24 @@ def update_zip(in_zip_path: str, out_zip_path: str,
 
 def fix_images(temp_dir: str, book_path: str,
                backup: bool, backup_path: str) -> str:
+    """Takes a dir, a book and backup info and fixes images
 
+    Args:
+        temp_dir (str): directory where files will be edited
+        book_path (str): path to an epub
+        backup (bool): if backups occur
+        backup_path (str): backup path
+
+    Returns:
+        str: returns the file path for the fixed book
+    """
     # Temp path is where the fixed epub will be
     temp_file = os.path.basename(book_path)
     temp_path = os.path.join(temp_dir, "temp-" + temp_file)
     if os.path.exists(temp_path):
         os.remove(temp_path)
 
+    # Actually updates the book
     update_zip(book_path, temp_path, scan_zip(book_path, ".html"))
 
     # Backups
@@ -176,4 +187,5 @@ def fix_images(temp_dir: str, book_path: str,
         safe_loc = safe_loc.replace(".epub", "")
         safe_loc = safe_loc + "-" + now + "-bk.epub"
         shutil.copy2(book_path, safe_loc)
+
     return temp_path

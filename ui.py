@@ -11,6 +11,7 @@ class InterfacePlugin(InterfaceAction):
                    None)
 
     def genesis(self):
+        """Sets up the UI elements in Calibre"""
         # Icons
         icon = get_icons('images/icon.png', "Fimfiction Ebook Plugin")
         self.qaction.setIcon(icon)
@@ -47,18 +48,24 @@ class InterfacePlugin(InterfaceAction):
         )
 
     def start_image_fix(self):
+        """Starts the image fix job"""
+
+        # Imports
         from calibre.gui2.threaded_jobs import ThreadedJob
         from calibre.gui2 import error_dialog
 
         # Get selected books in library
         rows = self.gui.library_view.selectionModel().selectedRows()
 
+        # Ensures items selected in Calibre
         if not rows:
             return error_dialog(
-                            self.gui, 'Error', 'Nothing Selected', show=True)
+                self.gui, 'Error', 'Nothing Selected', show=True)
 
+        # List of Calibre IDs used in the actual job
         book_ids = list(map(self.gui.library_view.model().id, rows))
 
+        # Creates the job object
         job = ThreadedJob(
             "fimfic_fix_fix_images",
             "Fixing images",
@@ -68,34 +75,56 @@ class InterfacePlugin(InterfaceAction):
             self.image_fix_finished
         )
 
+        # Runs the job
         self.gui.job_manager.run_threaded_job(job)
 
-    def run_image_fix(self, book_ids, log=None, notifiations=None, **_):
+    def run_image_fix(self, book_ids: list[str],
+                      log=None, notifications=None, **_):
+        """Runs the actual image fix code
+
+        Args:
+            book_ids (list[str]): a list of calibre book ids
+            log (_type_, optional): calibre log. Defaults to None.
+            notifiations (_type_, optional): calibre notifications.
+                Defaults to None.
+        """
+
+        # Imports
         import os
         from calibre_plugins.fimfic_fix.fix_images import fix_images
         from calibre.ptempfile import TemporaryDirectory
         from calibre_plugins.fimfic_fix.config import prefs
 
+        # Gets the database from Calibre
         db = self.gui.current_db.new_api
+
+        # uses a temp directory to work in.
         with TemporaryDirectory() as tdir:
             for index, book_id in enumerate(book_ids):
-                epub_name = os.path.basename(db.format_abspath(book_id,
-                                                               "EPUB"))
-                if notifiations:
-                    notifiations.put((0, f"Processing: {epub_name}"))
+                epub_name = os.path.basename(
+                    db.format_abspath(book_id, "EPUB"))
+
+                # Notifications and log for Calibre
+                if notifications:
+                    notifications.put(
+                        (float(index/len(book_ids)), f"Processing: {epub_name}"))
 
                 if log:
                     log(f"Started file: {epub_name}")
 
+                # Copies epub over to temp dir
                 temp_epub = os.path.join(tdir, epub_name)
                 db.copy_format_to(book_id, "EPUB", temp_epub)
 
-                # fixes the book
+                # fixes the book at temp dir, returning the new location
                 fixed_epub = fix_images(
                     tdir, temp_epub,
                     prefs["do_backups"], prefs["backup_path"])
 
+                # Copies the edit back into Calibre
                 db.add_format(book_id, "EPUB", fixed_epub, replace=True)
+
+                # More Logs
                 if log:
                     log(f"Completed file: {epub_name}")
             if prefs["do_backups"] and log:
@@ -104,8 +133,16 @@ class InterfacePlugin(InterfaceAction):
         return
 
     def image_fix_finished(self, job):
+        """Runs on completion or failure of the image_fix job
+
+        Args:
+            job (_type_): Calibre job object
+        """
+
+        # Import
         from calibre.gui2 import error_dialog
 
+        # Catches for failure or canellation
         if job.failed:
             error_dialog(self.gui, "Fix Images Failed")
             return
@@ -114,6 +151,9 @@ class InterfacePlugin(InterfaceAction):
             return
 
     def open_book_merge(self):
+        """Runs the book merge functionality"""
+
+        # Imports
         from calibre_plugins.fimfic_fix.merge_books import merge_books
         from calibre.gui2 import info_dialog, error_dialog
         from calibre.ptempfile import TemporaryDirectory
@@ -144,6 +184,7 @@ class InterfacePlugin(InterfaceAction):
             return error_dialog(
                 self.gui, 'Error', 'No File Selected', show=True)
         try:
+            # Uses a temp directory to work in
             with TemporaryDirectory() as tdir:
                 epub_path = db.format_abspath(book_id, "EPUB")
                 filename = os.path.basename(epub_path)
@@ -160,7 +201,7 @@ class InterfacePlugin(InterfaceAction):
             return error_dialog(
                 self.gui, 'Error', f'Error: {e}', show=True)
 
-        # Simple print TODO will remove later
+        # Simple dialog on completion
         if prefs["do_backups"]:
             dialog_str = (
                 f"Book: '{mi.title}' has been merged with, '{merge_path}'.\n" +
@@ -172,11 +213,13 @@ class InterfacePlugin(InterfaceAction):
         info_dialog(self.gui, "Book Merged!", dialog_str, show=True)
 
     def open_config(self):
+        """Config Running"""
         base_plugin_object = self.interface_action_base_plugin
         do_user_config = base_plugin_object.do_user_config
         do_user_config(self.gui)
 
     def apply_settings(self):
+        """Setting Applying"""
         from calibre_plugins.fimfic_fix.config import prefs
         # In an actual non trivial plugin, you would probably need to
         # do something based on the settings in prefs
