@@ -197,7 +197,7 @@ def fix_images(temp_dir: str, book_path: str,
         book_path, temp_path, scan_zip(book_path, ".html"), log)
 
     # Backups
-    if backup:
+    if backup and fixed_path:
         now = datetime.now().strftime(r"%Y-%m-%d-%H-%M-%S")
         safe_loc = os.path.join(
             backup_path, os.path.basename(book_path))
