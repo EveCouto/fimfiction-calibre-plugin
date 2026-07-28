@@ -79,7 +79,7 @@ class InterfacePlugin(InterfaceAction):
         self.gui.job_manager.run_threaded_job(job)
 
     def run_image_fix(self, book_ids: list[str],
-                      log=None, notifications=None, **_):
+                      log=None, notifications=None, abort=None):
         """Runs the actual image fix code
 
         Args:
@@ -107,10 +107,12 @@ class InterfacePlugin(InterfaceAction):
                 # Notifications and log for Calibre
                 if notifications:
                     notifications.put(
-                        (float(index/len(book_ids)), f"Processing: {epub_name}"))
+                        (float(index/len(book_ids)),
+                         f"Processing: '{epub_name}'"))
 
                 if log:
-                    log(f"Started file: {epub_name}")
+                    log("-" * 150)
+                    log(f"Started file: '{epub_name}'")
 
                 # Copies epub over to temp dir
                 temp_epub = os.path.join(tdir, epub_name)
@@ -119,14 +121,18 @@ class InterfacePlugin(InterfaceAction):
                 # fixes the book at temp dir, returning the new location
                 fixed_epub = fix_images(
                     tdir, temp_epub,
-                    prefs["do_backups"], prefs["backup_path"])
+                    prefs["do_backups"], prefs["backup_path"], log)
 
                 # Copies the edit back into Calibre
-                db.add_format(book_id, "EPUB", fixed_epub, replace=True)
+                if fixed_epub:
+                    db.add_format(book_id, "EPUB", fixed_epub, replace=True)
+                    if log:
+                        log(f"Completed file: '{epub_name}'")
+                else:
+                    if log:
+                        log(f"File Not Updated: '{epub_name}'")
 
-                # More Logs
-                if log:
-                    log(f"Completed file: {epub_name}")
+            # Completion Log
             if prefs["do_backups"] and log:
                 log(f"\nBackups found at {prefs["backup_path"]}")
 

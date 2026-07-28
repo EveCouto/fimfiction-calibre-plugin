@@ -104,13 +104,16 @@ def update_xml(xml: str, links: set):
 
 
 def update_zip(in_zip_path: str, out_zip_path: str,
-               file_to_img: dict[str, list[str]]) -> None:
+               file_to_img: dict[str, list[str]],
+               log=None) -> str:
     """Takes input and output and data to update epub zip
 
     Args:
         in_zip_path (str): input filepath
         out_zip_path (str): output filepath
         file_to_img (dict[str, list[str]]): data dict
+    Return:
+        str: path of fixed file
     """
 
     # Updates data in dictionary
@@ -122,6 +125,11 @@ def update_zip(in_zip_path: str, out_zip_path: str,
     for key in file_to_img.keys():
         for img in file_to_img[key]:
             links.add(img["link"])
+
+    if len(links) == 0:
+        if log:
+            log(" " * 5, "**No Images to fix, skipping**")
+        return ""
 
     # Opens input and output zip files.
     with (zipfile.ZipFile(in_zip_path) as in_zip,
@@ -146,19 +154,27 @@ def update_zip(in_zip_path: str, out_zip_path: str,
             name = os.path.basename(link)
             if name not in in_zip.namelist():
                 try:
+                    if log:
+                        log(" " * 5, f"Downloading: '{link}'")
                     file = urllib.request.urlopen(link, timeout=20).read()
                 except urllib.error.HTTPError:
+                    if log:
+                        log("\t**Download Failed, HTTP Error**")
                     continue
                 except TimeoutError:
                     try:
                         file = urllib.request.urlopen(link, timeout=20).read()
                     except TimeoutError:
+                        if log:
+                            log(" " * 10, "**Download Failed, Timed out**")
                         continue
                 out_zip.writestr(f"{"images/" + name}", file)
+    return out_zip_path
 
 
 def fix_images(temp_dir: str, book_path: str,
-               backup: bool, backup_path: str) -> str:
+               backup: bool, backup_path: str = None,
+               log=None) -> str:
     """Takes a dir, a book and backup info and fixes images
 
     Args:
@@ -177,7 +193,8 @@ def fix_images(temp_dir: str, book_path: str,
         os.remove(temp_path)
 
     # Actually updates the book
-    update_zip(book_path, temp_path, scan_zip(book_path, ".html"))
+    fixed_path = update_zip(
+        book_path, temp_path, scan_zip(book_path, ".html"), log)
 
     # Backups
     if backup:
@@ -188,4 +205,7 @@ def fix_images(temp_dir: str, book_path: str,
         safe_loc = safe_loc + "-" + now + "-bk.epub"
         shutil.copy2(book_path, safe_loc)
 
-    return temp_path
+    if fixed_path:
+        return fixed_path
+    else:
+        return ""
