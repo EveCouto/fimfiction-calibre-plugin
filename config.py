@@ -1,12 +1,14 @@
 from calibre.utils.config import JSONConfig
-from qt.core import (QVBoxLayout, QHBoxLayout, QLabel,
-                     QWidget, QCheckBox, QFileDialog, QPushButton)
+from qt.core import (QVBoxLayout, QHBoxLayout, QLabel, QFrame, QWidget,
+                     QCheckBox, QSizePolicy, QFileDialog, QPushButton, Qt)
+import os
 
 
 prefs = JSONConfig('plugins/fimfic_fix_config')
 
 prefs.defaults["do_backups"] = False
 prefs.defaults["backup_path"] = ""
+prefs.defaults["do_auto_fix"] = False
 
 
 class ConfigWidget(QWidget):
@@ -17,14 +19,31 @@ class ConfigWidget(QWidget):
         self.l = QVBoxLayout()
         self.setLayout(self.l)
 
+        # Title Label
+        self.title_label = QLabel("FimFiction Ebook Plugin Settings")
+        font = self.title_label.font()
+        font.setPointSize(font.pointSize() + 2)
+        font.setBold(True)
+        self.title_label.setFont(font)
+        self.title_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.l.addWidget(self.title_label)
+
+        # Spacer 0
+        self.line0 = QFrame()
+        self.line0.setFrameShape(QFrame.Shape.HLine)
+        self.line0.setFrameShadow(QFrame.Shadow.Sunken)
+        self.l.addWidget(self.line0)
+        self.l.addSpacing(10)
+
         # Backup Checkbox
         self.row1 = QHBoxLayout()
-        self.check_label = QLabel("Backup Files?")
-        self.row1.addWidget(self.check_label)
+        self.backup_check_label = QLabel("Backup Files?")
+        self.row1.addWidget(self.backup_check_label)
         self.backup_checkbox = QCheckBox()
         self.backup_checkbox.setChecked(prefs["do_backups"])
         self.row1.addWidget(self.backup_checkbox)
         self.l.addLayout(self.row1)
+        self.backup_checkbox.toggled.connect(self.check_path)
 
         # Backup Path
         self.row2 = QHBoxLayout()
@@ -35,10 +54,63 @@ class ConfigWidget(QWidget):
         self.row2.addWidget(self.backup_dir_button)
         self.l.addLayout(self.row2)
 
+        # Spacer 1
+        self.l.addSpacing(10)
+        self.line1 = QFrame()
+        self.line1.setFrameShape(QFrame.Shape.HLine)
+        self.line1.setFrameShadow(QFrame.Shadow.Sunken)
+        self.l.addWidget(self.line1)
+        self.l.addSpacing(10)
+
+        # Do Automatic image fix
+        self.row3 = QHBoxLayout()
+        self.auto_fix_check_label = QLabel(
+            "Auto-run Fix Images\non Merge Book?")
+        self.row3.addWidget(self.auto_fix_check_label)
+        self.auto_fix_checkbox = QCheckBox()
+        self.auto_fix_checkbox.setChecked(prefs["do_auto_fix"])
+        self.row3.addWidget(self.auto_fix_checkbox)
+        self.l.addLayout(self.row3)
+
+        # Spacer 2
+        self.l.addSpacing(10)
+        self.line2 = QFrame()
+        self.line2.setFrameShape(QFrame.Shape.HLine)
+        self.line2.setFrameShadow(QFrame.Shadow.Sunken)
+        self.l.addWidget(self.line2)
+        self.l.addSpacing(10)
+
+        # Set Defaults
+        self.row4 = QHBoxLayout()
+        self.set_defaults_button = QPushButton("Reset to Default?")
+        self.set_defaults_button.setSizePolicy(
+            QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
+        self.set_defaults_button.clicked.connect(self.set_defaults)
+        self.row4.addWidget(self.set_defaults_button)
+        self.l.addLayout(self.row4)
+
+        # Risizes to fit
+        self.resize(self.sizeHint())
+
+    def set_defaults(self):
+        self.backup_checkbox.setChecked(prefs.defaults["do_backups"])
+        self.backup_dir_button.setText(prefs.defaults["backup_path"])
+        self.auto_fix_checkbox.setChecked(prefs.defaults["do_auto_fix"])
+
+    def check_path(self):
+        if self.backup_checkbox.isChecked():
+            if not self.backup_dir_button.text():
+                self.backup_checkbox.setChecked(False)
+
     def get_backup_dir(self):
         # Opens file dialog and sets button text
+        # Default location is downloads unless dir already selected
+        default_loc = os.path.expanduser("~/Downloads")
+        if self.backup_dir_button.text():
+            if os.path.exists(self.backup_dir_button.text()):
+                default_loc = self.backup_dir_button.text()
         backup_dir = QFileDialog.getExistingDirectory(
-            self, "Select Backup Folder")
+            self, "Select Backup Folder", default_loc)
         if not backup_dir:
             backup_dir = prefs["backup_path"]
         self.backup_dir_button.setText(backup_dir)
@@ -47,3 +119,4 @@ class ConfigWidget(QWidget):
         # Updates the preferences file
         prefs["do_backups"] = self.backup_checkbox.isChecked()
         prefs["backup_path"] = self.backup_dir_button.text()
+        prefs["do_auto_fix"] = self.auto_fix_checkbox.isChecked()
