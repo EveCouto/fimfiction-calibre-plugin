@@ -107,7 +107,7 @@ class InterfacePlugin(InterfaceAction):
                 # Notifications and log for Calibre
                 if notifications:
                     notifications.put(
-                        (float(index/len(book_ids)),
+                        (float((index+1)/(len(book_ids)+1)),
                          f"Fixing file {index+1} / {len(book_ids)}: " +
                          f"'{epub_name}'"))
 
