@@ -103,6 +103,25 @@ def update_xml(xml: str, links: set):
     return upper + lower
 
 
+def request_image(link: str, log=None):
+    try:
+        if log:
+            log(" " * 5, f"Downloading: '{link}'")
+        file = urllib.request.urlopen(link, timeout=20).read()
+    except urllib.error.HTTPError:
+        if log:
+            log("\t**Download Failed, HTTP Error**")
+        return None
+    except TimeoutError:
+        try:
+            file = urllib.request.urlopen(link, timeout=20).read()
+        except TimeoutError:
+            if log:
+                log(" " * 10, "**Download Failed, Timed out**")
+            return None
+    return file
+
+
 def update_zip(in_zip_path: str, out_zip_path: str,
                file_to_img: dict[str, list[str]],
                log=None) -> str:
@@ -122,6 +141,7 @@ def update_zip(in_zip_path: str, out_zip_path: str,
 
     # Gets all links into a set to prevent duplicates
     links = set()
+    successful_links = set()
     for key in file_to_img.keys():
         for img in file_to_img[key]:
             links.add(img["link"])
@@ -131,9 +151,12 @@ def update_zip(in_zip_path: str, out_zip_path: str,
             log(" " * 5, "**No Images to fix, skipping**")
         return ""
 
+    opf_file = ""
+
     # Opens input and output zip files.
     with (zipfile.ZipFile(in_zip_path) as in_zip,
           zipfile.ZipFile(out_zip_path, 'w') as out_zip):
+        all_in_files = set(in_zip.namelist())
         for in_zip_info in in_zip.infolist():
             with in_zip.open(in_zip_info) as in_file:
                 content = in_file.read()
@@ -141,34 +164,39 @@ def update_zip(in_zip_path: str, out_zip_path: str,
             # Runs through all documents needing editing and updates
             if in_zip_info.filename in file_to_img.keys():
                 for img in file_to_img[in_zip_info.filename]:
-                    content = content.replace(bytes(img["orig"], "cp437"),
-                                              bytes(img["src"], "cp437"))
+                    # Sets cleaner variable names
+                    link = img["link"]
+                    name = os.path.basename(link)
+                    content = content.replace(
+                        bytes(img["orig"], "cp437"),
+                        bytes(img["src"], "cp437"))
+                    if link in links and name not in all_in_files:
+                        if img_bytes := request_image(link, log):
+                            out_zip.writestr(f"{"images/" + name}", img_bytes)
+                            links.discard(link)
+                            successful_links.add(link)
+                        else:
+                            html_string = ("<a class='failed-img' " +
+                                           "rel='nofollow' " +
+                                           f"href='{link}'>" +
+                                           " Image request failed: " +
+                                           "Click to try and view </a>")
+                            content = content.replace(
+                                bytes(img["src"], "cp437"),
+                                bytes(html_string, "cp437"))
 
             # Runs through the opf data file
             if ".opf" in in_zip_info.filename:
-                content = update_xml(content, links)
+                opf_file = in_zip_info.filename
+
             out_zip.writestr(in_zip_info.filename, content)
 
-        # Checks if image is already in zip, downloads new
-        for link in links:
-            name = os.path.basename(link)
-            if name not in in_zip.namelist():
-                try:
-                    if log:
-                        log(" " * 5, f"Downloading: '{link}'")
-                    file = urllib.request.urlopen(link, timeout=20).read()
-                except urllib.error.HTTPError:
-                    if log:
-                        log("\t**Download Failed, HTTP Error**")
-                    continue
-                except TimeoutError:
-                    try:
-                        file = urllib.request.urlopen(link, timeout=20).read()
-                    except TimeoutError:
-                        if log:
-                            log(" " * 10, "**Download Failed, Timed out**")
-                        continue
-                out_zip.writestr(f"{"images/" + name}", file)
+        if opf_file:
+            with in_zip.open(opf_file) as in_file:
+                content = in_file.read()
+                content = update_xml(content, successful_links)
+                out_zip.writestr(opf_file, content)
+
     return out_zip_path
 
 
