@@ -104,20 +104,31 @@ def update_xml(xml: str, links: set):
 
 
 def request_image(link: str, log=None):
+    """tries to request an image from internet
+
+    Args:
+        link (str): link trying to retrieve
+        log (_type_, optional): log for calibre. Defaults to None.
+
+    Returns:
+        str: the content of file or None
+    """
     try:
         if log:
             log(" " * 5, f"Downloading: '{link}'")
+        # Tries to get the data from the link
         file = urllib.request.urlopen(link, timeout=20).read()
     except urllib.error.HTTPError:
         if log:
             log("\t**Download Failed, HTTP Error**")
         return None
     except TimeoutError:
+        # Allows for one timeout before assuming broken link
         try:
             file = urllib.request.urlopen(link, timeout=20).read()
         except TimeoutError:
             if log:
-                log(" " * 10, "**Download Failed, Timed out**")
+                log(" " * 10, "**Download Failed, Timed Out**")
             return None
     return file
 
@@ -167,15 +178,22 @@ def update_zip(in_zip_path: str, out_zip_path: str,
                     # Sets cleaner variable names
                     link = img["link"]
                     name = os.path.basename(link)
+
+                    # updates the html link to point at file
                     content = content.replace(
                         bytes(img["orig"], "cp437"),
                         bytes(img["src"], "cp437"))
+
+                    # Ensures no files will be duplicated
                     if link in links and name not in all_in_files:
+                        # Gets image and writes the data to the zip
                         if img_bytes := request_image(link, log):
                             out_zip.writestr(f"{"images/" + name}", img_bytes)
                             links.discard(link)
                             successful_links.add(link)
                         else:
+                            # If getting image fails, content is updated
+                            # To reflect this
                             html_string = ("<a class='failed-img' " +
                                            "rel='nofollow' " +
                                            f"href='{link}'>" +
@@ -201,8 +219,8 @@ def update_zip(in_zip_path: str, out_zip_path: str,
 
 
 def fix_images(temp_dir: str, book_path: str,
-               backup: bool, backup_path: str = None,
-               log=None) -> str:
+               backup: bool = False, backup_path: str = None,
+               retry: bool = False, log=None) -> str:
     """Takes a dir, a book and backup info and fixes images
 
     Args:
