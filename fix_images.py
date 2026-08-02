@@ -59,7 +59,6 @@ def hidden_link_fix(link: str) -> str:
         if link.find("?") >= 0:
             return link[link.find("http"):link.find("?")]
         elif (match := re.search(http_pattern, link)):
-            print("link:",  match.group(0))
             return match.group(0)
         else:
             return link[link.find("http"):link.find('"')]
@@ -187,8 +186,6 @@ def update_zip(in_zip_path: str, out_zip_path: str,
                     name = os.path.basename(link)
 
                     # updates the html link to point at file
-                    print(img["orig"])
-                    print("\n\n", img["src"])
                     content = content.replace(
                         bytes(img["orig"], "cp437"),
                         bytes(img["src"], "cp437"))
