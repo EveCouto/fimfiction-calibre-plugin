@@ -4,7 +4,7 @@ from calibre.customize import InterfaceActionBase
 class FimfictionEbookPlugin(InterfaceActionBase):
 
     name = 'Fimfiction Ebook Plugin'
-    version = (1, 0, 3)
+    version = (1, 0, 4)
     author = 'EveCouto'
     supported_platforms = ['windows']
     description = 'Allows for fixing images and merging updated epubs'
