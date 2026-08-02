@@ -49,19 +49,20 @@ def hidden_link_fix(link: str) -> str:
 
     # Checks for matches in link
     pattern = r'url=(.*?)(?=%3F|[\'"])'
+    http_pattern = r'https?://[^\'">\s]+'
     matches = re.search(pattern, link)
 
     # Returns unquoted version if a match
     if matches:
         return urllib.parse.unquote(matches.group(1))
     else:
-        if link.find("?"):
+        if link.find("?") >= 0:
             return link[link.find("http"):link.find("?")]
+        elif (match := re.search(http_pattern, link)):
+            print("link:",  match.group(0))
+            return match.group(0)
         else:
-            end = link.find("'")
-            if not end:
-                end = link.find('"')
-            return link[link.find("http"):end]
+            return link[link.find("http"):link.find('"')]
 
 
 def get_img_data(img: str) -> dict:
