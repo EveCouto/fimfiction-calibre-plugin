@@ -122,7 +122,8 @@ class InterfacePlugin(InterfaceAction):
                 # fixes the book at temp dir, returning the new location
                 fixed_epub = fix_images(
                     tdir, temp_epub,
-                    prefs["do_backups"], prefs["backup_path"], log)
+                    prefs["do_backups"], prefs["backup_path"],
+                    prefs["do_retry_fix"], log)
 
                 # Copies the edit back into Calibre
                 if fixed_epub:

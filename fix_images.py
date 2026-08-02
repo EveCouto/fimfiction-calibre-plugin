@@ -7,45 +7,48 @@ import shutil
 from datetime import datetime
 
 
-def scan_zip(zip_path: str, file_ext: str,
-             pattern: str = r"(<img src=\"http[^>]*\/>)", ) -> dict:
+def scan_zip(zip_path: str, file_ext: str, retry: bool) -> dict:
     """Scans zip file for pattern matches in files
 
     Args:
         zip_path (str): filepath of zip
-        pattern (str): regex pattern, defaults
         file_ext (str): file extension
+        retry (bool): True if wanting to retry
 
     Returns:
         dict: filename -> match(es)
     """
 
+    pattern = r"(<img src=\"http[^>]*\/>)"
+    retry_pattern = r"(<a class=[\"']failed-img['\"][^<]*<\/a>)"
     loc_to_match = {}
 
-    # Open zip, read files and gets instances of pattern
+    # Open zip, read files and gets instances of patterns
     with zipfile.ZipFile(zip_path) as zip:
         for zip_info in zip.infolist():
             if file_ext in zip_info.filename:
                 with zip.open(zip_info) as in_file:
                     content = in_file.read().decode()
                     matches = re.findall(pattern, content)
+                    if retry:
+                        matches.extend(re.findall(retry_pattern, content))
                     if matches:
                         loc_to_match[zip_info.filename] = matches
     return loc_to_match
 
 
-def hidden_link_fix(link: str, pattern: str = r'url=(.*?)(?=%3F|")') -> str:
+def hidden_link_fix(link: str) -> str:
     """checks string and extracts hidden url
 
     Args:
         link (str): a string containing a hidden link
-        pattern (str): regex pattern. Optional. Defaults to r"url=(.*)\"".
 
     Returns:
         str: fixed link or original if no changes
     """
 
     # Checks for matches in link
+    pattern = r'url=(.*?)(?=%3F|[\'"])'
     matches = re.search(pattern, link)
 
     # Returns unquoted version if a match
@@ -55,7 +58,10 @@ def hidden_link_fix(link: str, pattern: str = r'url=(.*?)(?=%3F|")') -> str:
         if link.find("?"):
             return link[link.find("http"):link.find("?")]
         else:
-            return link[link.find("http"):link.find('"')]
+            end = link.find("'")
+            if not end:
+                end = link.find('"')
+            return link[link.find("http"):end]
 
 
 def get_img_data(img: str) -> dict:
@@ -180,6 +186,8 @@ def update_zip(in_zip_path: str, out_zip_path: str,
                     name = os.path.basename(link)
 
                     # updates the html link to point at file
+                    print(img["orig"])
+                    print("\n\n", img["src"])
                     content = content.replace(
                         bytes(img["orig"], "cp437"),
                         bytes(img["src"], "cp437"))
@@ -194,11 +202,11 @@ def update_zip(in_zip_path: str, out_zip_path: str,
                         else:
                             # If getting image fails, content is updated
                             # To reflect this
-                            html_string = ("<a class='failed-img' " +
-                                           "rel='nofollow' " +
-                                           f"href='{link}'>" +
-                                           " Image request failed: " +
-                                           "Click to try and view </a>")
+                            html_string = ('<a class="failed-img" ' +
+                                           'rel="nofollow" ' +
+                                           f'href="{link}">' +
+                                           ' Image request failed: ' +
+                                           'Click to try and view </a>')
                             content = content.replace(
                                 bytes(img["src"], "cp437"),
                                 bytes(html_string, "cp437"))
@@ -240,7 +248,7 @@ def fix_images(temp_dir: str, book_path: str,
 
     # Actually updates the book
     fixed_path = update_zip(
-        book_path, temp_path, scan_zip(book_path, ".html"), log)
+        book_path, temp_path, scan_zip(book_path, ".html", retry), log)
 
     # Backups
     if backup and fixed_path:

@@ -9,6 +9,7 @@ prefs = JSONConfig('plugins/fimfic_fix_config')
 prefs.defaults["do_backups"] = False
 prefs.defaults["backup_path"] = ""
 prefs.defaults["do_auto_fix"] = False
+prefs.defaults["do_retry_fix"] = False
 
 
 class ConfigWidget(QWidget):
@@ -65,12 +66,25 @@ class ConfigWidget(QWidget):
         # Do Automatic image fix
         self.row3 = QHBoxLayout()
         self.auto_fix_check_label = QLabel(
-            "Auto-run Fix Images\non Merge Book?")
+            "Auto-run Fix Images \non Merge Book?")
         self.row3.addWidget(self.auto_fix_check_label)
         self.auto_fix_checkbox = QCheckBox()
         self.auto_fix_checkbox.setChecked(prefs["do_auto_fix"])
         self.row3.addWidget(self.auto_fix_checkbox)
         self.l.addLayout(self.row3)
+
+        # Small Spacing
+        self.l.addSpacing(10)
+
+        # Do retry image fix
+        self.row4 = QHBoxLayout()
+        self.retry_image_label = QLabel(
+            "Retry failed images \non Image Fix?")
+        self.row4.addWidget(self.retry_image_label)
+        self.retry_image_checkbox = QCheckBox()
+        self.retry_image_checkbox.setChecked(prefs["do_retry_fix"])
+        self.row4.addWidget(self.retry_image_checkbox)
+        self.l.addLayout(self.row4)
 
         # Spacer 2
         self.l.addSpacing(10)
@@ -81,13 +95,13 @@ class ConfigWidget(QWidget):
         self.l.addSpacing(10)
 
         # Set Defaults
-        self.row4 = QHBoxLayout()
+        self.def_row = QHBoxLayout()
         self.set_defaults_button = QPushButton("Reset to Default?")
         self.set_defaults_button.setSizePolicy(
             QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
         self.set_defaults_button.clicked.connect(self.set_defaults)
-        self.row4.addWidget(self.set_defaults_button)
-        self.l.addLayout(self.row4)
+        self.def_row.addWidget(self.set_defaults_button)
+        self.l.addLayout(self.def_row)
 
         # Risizes to fit
         self.resize(self.sizeHint())
@@ -96,6 +110,8 @@ class ConfigWidget(QWidget):
         self.backup_checkbox.setChecked(prefs.defaults["do_backups"])
         self.backup_dir_button.setText(prefs.defaults["backup_path"])
         self.auto_fix_checkbox.setChecked(prefs.defaults["do_auto_fix"])
+        self.retry_image_checkbox.setChecked(prefs.defaults["do_retry_fix"])
+        self.resize(self.sizeHint())
 
     def check_path(self):
         if self.backup_checkbox.isChecked():
@@ -114,9 +130,11 @@ class ConfigWidget(QWidget):
         if not backup_dir:
             backup_dir = prefs["backup_path"]
         self.backup_dir_button.setText(backup_dir)
+        self.resize(self.sizeHint())
 
     def save_settings(self):
         # Updates the preferences file
         prefs["do_backups"] = self.backup_checkbox.isChecked()
         prefs["backup_path"] = self.backup_dir_button.text()
         prefs["do_auto_fix"] = self.auto_fix_checkbox.isChecked()
+        prefs["do_retry_fix"] = self.retry_image_checkbox.isChecked()
