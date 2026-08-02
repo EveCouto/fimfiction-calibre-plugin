@@ -5,6 +5,7 @@ import urllib.parse
 import urllib.request
 import shutil
 from datetime import datetime
+import xml.etree.ElementTree as ET
 
 
 def scan_zip(zip_path: str, file_ext: str, retry: bool) -> dict:
@@ -82,7 +83,6 @@ def get_img_data(img: str) -> dict:
             "name": img_name, "src": new_src}
 
 
-# TODO maybe use proper xml parsing later...
 def update_xml(xml: str, links: set):
     """Updates XML, only really works with byte
 
@@ -94,19 +94,32 @@ def update_xml(xml: str, links: set):
         byte: xml text output
     """
 
-    upper = xml[:xml.find(bytes("</manifest>", "cp437"))]
-    lower = xml[xml.find(bytes("</manifest>", "cp437")):]
+    # Setting up XML parsing
+    NS = {"opf": "http://www.idpf.org/2007/opf"}
+    ET.register_namespace("", NS["opf"])
+    ET.register_namespace("dc", "http://purl.org/dc/elements/1.1/")
 
+    # Finding xml data location
+    root = ET.fromstring(xml)
+    manifest = root.find("opf:manifest", NS)
+
+    # Adds an item for each link
     for link in links:
         name = os.path.basename(link)
         if bytes(name, "cp437") not in xml:
             media = os.path.splitext(name)[1]
-            add = (f'\t<item id="{name}" ' +
-                   f'href="images/{name}" ' +
-                   f'media-type="image/{media}" />\n\t')
-            upper += bytes(add, "cp437")
+            item = ET.Element(
+                    f"{{{NS['opf']}}}item",
+                    {
+                        "id": name,
+                        "href": f"images/{name}",
+                        "media-type": f"image/{media}",
+                    }
+                )
+            manifest.append(item)
 
-    return upper + lower
+    # Returns the new xml back
+    return ET.tostring(root)
 
 
 def request_image(link: str, log=None):
