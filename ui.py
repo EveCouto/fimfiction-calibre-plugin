@@ -23,15 +23,7 @@ class InterfacePlugin(InterfaceAction):
         self.menu = QMenu(self.gui)
         self.qaction.setMenu(self.menu)
 
-        # Sub menu item 1
-        self.create_menu_action(
-            self.menu,
-            unique_name="image_fix",
-            text="Fix Images",
-            triggered=self.start_image_fix
-        )
-
-        # Sub menu item 2
+        # Merge Books sub menu
         self.create_menu_action(
             self.menu,
             unique_name="merge_books",
@@ -39,7 +31,23 @@ class InterfacePlugin(InterfaceAction):
             triggered=self.open_book_merge
         )
 
-        # Sub menu item 3
+        # Fix images sub menu
+        self.create_menu_action(
+            self.menu,
+            unique_name="image_fix",
+            text="Fix Images",
+            triggered=self.start_image_fix
+        )
+
+        # Fix Images + Retry sub menu
+        self.create_menu_action(
+            self.menu,
+            unique_name="image_fix_retry",
+            text="Fix Images + Retry",
+            triggered=self.start_image_fix_retry
+        )
+
+        # Config Plugin sub menu
         self.create_menu_action(
             self.menu,
             unique_name="config_plugin",
@@ -53,9 +61,41 @@ class InterfacePlugin(InterfaceAction):
         from calibre_plugins.fimfic_fix.config import prefs
         function_dict = {
             "Merge Books": self.open_book_merge,
-            "Fix Images": self.start_image_fix
+            "Fix Images": self.start_image_fix,
+            "Fix Images + Retry": self.start_image_fix_retry,
+            "Config Plugin": self.open_config
         }
         function_dict[prefs["main_button"]]()
+
+    def start_image_fix_retry(self):
+        """Starts the image fix + retry job"""
+        # Imports
+        from calibre.gui2.threaded_jobs import ThreadedJob
+        from calibre.gui2 import error_dialog
+
+        # Get selected books in library
+        rows = self.gui.library_view.selectionModel().selectedRows()
+
+        # Ensures items selected in Calibre
+        if not rows:
+            return error_dialog(
+                self.gui, 'Error', 'Nothing Selected', show=True)
+
+        # List of Calibre IDs used in the actual job
+        book_ids = list(map(self.gui.library_view.model().id, rows))
+
+        # Creates the job object
+        job = ThreadedJob(
+            "fimfic_fix_fix_images",
+            "Fixing images",
+            self.run_image_fix,
+            (book_ids, True),
+            {},
+            self.image_fix_finished
+        )
+
+        # Runs the job
+        self.gui.job_manager.run_threaded_job(job)
 
     def start_image_fix(self):
         """Starts the image fix job"""
@@ -88,7 +128,7 @@ class InterfacePlugin(InterfaceAction):
         # Runs the job
         self.gui.job_manager.run_threaded_job(job)
 
-    def run_image_fix(self, book_ids: list[str],
+    def run_image_fix(self, book_ids: list[str], retry: bool = False,
                       log=None, notifications=None, abort=None):
         """Runs the actual image fix code
 
@@ -130,10 +170,14 @@ class InterfacePlugin(InterfaceAction):
                 db.copy_format_to(book_id, "EPUB", temp_epub)
 
                 # fixes the book at temp dir, returning the new location
+                if retry:
+                    do_retry_fix = retry
+                else:
+                    do_retry_fix = prefs["do_retry_fix"]
                 fixed_epub = fix_images(
                     tdir, temp_epub,
                     prefs["do_backups"], prefs["backup_path"],
-                    prefs["do_retry_fix"], log)
+                    do_retry_fix, log)
 
                 # Copies the edit back into Calibre
                 if fixed_epub:

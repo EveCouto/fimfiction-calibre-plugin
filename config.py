@@ -45,7 +45,8 @@ class ConfigWidget(QWidget):
         self.main_button_row.addWidget(self.main_button_label)
         self.main_button_dropdown = QComboBox()
         self.main_button_dropdown.addItems(
-            ["Fix Images", "Merge Books"])
+            ["Merge Books", "Fix Images",
+             "Fix Images + Retry", "Config Plugin"])
         self.main_button_dropdown.setCurrentText(prefs["main_button"])
         self.main_button_row.addWidget(self.main_button_dropdown)
         self.layout.addLayout(self.main_button_row)
@@ -114,7 +115,7 @@ class ConfigWidget(QWidget):
         # Do retry image fix
         self.retry_fix_row = QHBoxLayout()
         self.retry_image_label = QLabel(
-            "Retry failed images \non Fix Images?")
+            "Always retry images \non Fix Images?")
         self.retry_fix_row.addWidget(self.retry_image_label)
         self.retry_image_checkbox = QCheckBox()
         self.retry_image_checkbox.setChecked(prefs["do_retry_fix"])
