@@ -17,7 +17,7 @@ class InterfacePlugin(InterfaceAction):
         self.qaction.setIcon(icon)
 
         # Main Button Action
-        self.qaction.triggered.connect(self.open_book_merge)
+        self.qaction.triggered.connect(self.do_main_button)
 
         # Sub menu
         self.menu = QMenu(self.gui)
@@ -46,6 +46,16 @@ class InterfacePlugin(InterfaceAction):
             text="Config Plugin",
             triggered=self.open_config
         )
+
+    def do_main_button(self):
+        """Runs the function that the main button is associated with
+        """
+        from calibre_plugins.fimfic_fix.config import prefs
+        function_dict = {
+            "Merge Books": self.open_book_merge,
+            "Fix Images": self.start_image_fix
+        }
+        function_dict[prefs["main_button"]]()
 
     def start_image_fix(self):
         """Starts the image fix job"""
@@ -212,9 +222,6 @@ class InterfacePlugin(InterfaceAction):
                     tdir, temp_epub, merge_path,
                     prefs["do_backups"], prefs["backup_path"],
                     prefs["do_check_metadata"])
-                if not merged_epub:
-                    raise Exception(
-                        "Metadata did not match. No files changed.")
                 db.add_format(book_id, "EPUB", merged_epub, replace=True)
         except Exception as e:
             return error_dialog(

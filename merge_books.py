@@ -26,9 +26,10 @@ def check_metadata(opf1, opf2):
     creator1 = metadata1.find("dc:creator", NS)
     creator2 = metadata2.find("dc:creator", NS)
 
-    return (identifier1.text == identifier2.text and
+    if not (identifier1.text == identifier2.text and
             title1.text == title2.text and
-            creator1.text == creator2.text)
+            creator1.text == creator2.text):
+        raise Exception("Metadata did not match")
 
 
 def merge_opf(opf1: bytes, opf2: bytes) -> bytes:
@@ -102,8 +103,8 @@ def merge_epub(old_path: str, new_path: str, out_path: str, meta_check: bool):
                 with new_zip.open(new_zip_info) as in_file:
                     new_opf = in_file.read()
 
-        if meta_check and not check_metadata(old_opf, new_opf):
-            return False
+        if meta_check:
+            check_metadata(old_opf, new_opf)
 
         # Adds old epub files to temp epub
         for old_zip_info in old_zip.infolist():
@@ -126,8 +127,6 @@ def merge_epub(old_path: str, new_path: str, out_path: str, meta_check: bool):
         merged_opf = merge_opf(old_opf, new_opf)
         out_zip.writestr("book.opf", merged_opf)
 
-    return True
-
 
 def merge_books(temp_dir: str, original_book_path: str, merge_book_path: str,
                 backup: bool, backup_path: str, meta_check: bool) -> str:
@@ -148,9 +147,8 @@ def merge_books(temp_dir: str, original_book_path: str, merge_book_path: str,
     temp_path = os.path.join(temp_dir, temp_file)
 
     # Merges the files into temp_path
-    if not merge_epub(original_book_path, merge_book_path,
-                      temp_path, meta_check):
-        return False
+    merge_epub(original_book_path, merge_book_path,
+               temp_path, meta_check)
 
     # Backups
     if backup:
