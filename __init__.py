@@ -4,10 +4,11 @@ from calibre.customize import InterfaceActionBase
 class FimfictionEbookPlugin(InterfaceActionBase):
 
     name = 'Fimfiction Ebook Plugin'
-    version = (1, 0, 4)
+    version = (1, 0, 5)
     author = 'EveCouto'
     supported_platforms = ['windows']
-    description = 'Allows for fixing images and merging updated epubs'
+    description = ('Allows for merging updated epubs ' +
+                   'and fixing images in FimFiction epub')
     minimum_calibre_version = (9, 11, 0)
 
     actual_plugin = 'calibre_plugins.fimfic_fix.ui:InterfacePlugin'
