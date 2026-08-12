@@ -17,8 +17,8 @@ class ConfigWidget(QWidget):
     def __init__(self):
         # Layout init
         QWidget.__init__(self)
-        self.l = QVBoxLayout()
-        self.setLayout(self.l)
+        self.layout = QVBoxLayout()
+        self.setLayout(self.layout)
 
         # Title Label
         self.title_label = QLabel("FimFiction Ebook Plugin Settings")
@@ -27,81 +27,81 @@ class ConfigWidget(QWidget):
         font.setBold(True)
         self.title_label.setFont(font)
         self.title_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.l.addWidget(self.title_label)
+        self.layout.addWidget(self.title_label)
 
-        # Spacer 0
-        self.line0 = QFrame()
-        self.line0.setFrameShape(QFrame.Shape.HLine)
-        self.line0.setFrameShadow(QFrame.Shadow.Sunken)
-        self.l.addWidget(self.line0)
-        self.l.addSpacing(10)
+        # Title Spacer
+        self.title_spacer = QFrame()
+        self.title_spacer.setFrameShape(QFrame.Shape.HLine)
+        self.title_spacer.setFrameShadow(QFrame.Shadow.Sunken)
+        self.layout.addWidget(self.title_spacer)
+        self.layout.addSpacing(10)
 
         # Backup Checkbox
-        self.row1 = QHBoxLayout()
+        self.backup_check_row = QHBoxLayout()
         self.backup_check_label = QLabel("Backup Files?")
-        self.row1.addWidget(self.backup_check_label)
+        self.backup_check_row.addWidget(self.backup_check_label)
         self.backup_checkbox = QCheckBox()
         self.backup_checkbox.setChecked(prefs["do_backups"])
-        self.row1.addWidget(self.backup_checkbox)
-        self.l.addLayout(self.row1)
+        self.backup_check_row.addWidget(self.backup_checkbox)
+        self.layout.addLayout(self.backup_check_row)
         self.backup_checkbox.toggled.connect(self.check_path)
 
         # Backup Path
-        self.row2 = QHBoxLayout()
+        self.backup_path_row = QHBoxLayout()
         self.dir_label = QLabel("Backup Folder:")
-        self.row2.addWidget(self.dir_label)
+        self.backup_path_row.addWidget(self.dir_label)
         self.backup_dir_button = QPushButton(prefs["backup_path"])
         self.backup_dir_button.clicked.connect(self.get_backup_dir)
-        self.row2.addWidget(self.backup_dir_button)
-        self.l.addLayout(self.row2)
+        self.backup_path_row.addWidget(self.backup_dir_button)
+        self.layout.addLayout(self.backup_path_row)
 
-        # Spacer 1
-        self.l.addSpacing(10)
-        self.line1 = QFrame()
-        self.line1.setFrameShape(QFrame.Shape.HLine)
-        self.line1.setFrameShadow(QFrame.Shadow.Sunken)
-        self.l.addWidget(self.line1)
-        self.l.addSpacing(10)
+        # Backup Spacer
+        self.layout.addSpacing(10)
+        self.backup_spacer = QFrame()
+        self.backup_spacer.setFrameShape(QFrame.Shape.HLine)
+        self.backup_spacer.setFrameShadow(QFrame.Shadow.Sunken)
+        self.layout.addWidget(self.backup_spacer)
+        self.layout.addSpacing(10)
 
         # Do Automatic image fix
-        self.row3 = QHBoxLayout()
+        self.auto_fix_row = QHBoxLayout()
         self.auto_fix_check_label = QLabel(
             "Auto-run Fix Images \non Merge Book?")
-        self.row3.addWidget(self.auto_fix_check_label)
+        self.auto_fix_row.addWidget(self.auto_fix_check_label)
         self.auto_fix_checkbox = QCheckBox()
         self.auto_fix_checkbox.setChecked(prefs["do_auto_fix"])
-        self.row3.addWidget(self.auto_fix_checkbox)
-        self.l.addLayout(self.row3)
+        self.auto_fix_row.addWidget(self.auto_fix_checkbox)
+        self.layout.addLayout(self.auto_fix_row)
 
         # Small Spacing
-        self.l.addSpacing(10)
+        self.layout.addSpacing(10)
 
         # Do retry image fix
-        self.row4 = QHBoxLayout()
+        self.retry_fix_row = QHBoxLayout()
         self.retry_image_label = QLabel(
             "Retry failed images \non Image Fix?")
-        self.row4.addWidget(self.retry_image_label)
+        self.retry_fix_row.addWidget(self.retry_image_label)
         self.retry_image_checkbox = QCheckBox()
         self.retry_image_checkbox.setChecked(prefs["do_retry_fix"])
-        self.row4.addWidget(self.retry_image_checkbox)
-        self.l.addLayout(self.row4)
+        self.retry_fix_row.addWidget(self.retry_image_checkbox)
+        self.layout.addLayout(self.retry_fix_row)
 
-        # Spacer 2
-        self.l.addSpacing(10)
-        self.line2 = QFrame()
-        self.line2.setFrameShape(QFrame.Shape.HLine)
-        self.line2.setFrameShadow(QFrame.Shadow.Sunken)
-        self.l.addWidget(self.line2)
-        self.l.addSpacing(10)
+        # Image fix spacer
+        self.layout.addSpacing(10)
+        self.image_fix_spacer = QFrame()
+        self.image_fix_spacer.setFrameShape(QFrame.Shape.HLine)
+        self.image_fix_spacer.setFrameShadow(QFrame.Shadow.Sunken)
+        self.layout.addWidget(self.image_fix_spacer)
+        self.layout.addSpacing(10)
 
         # Set Defaults
-        self.def_row = QHBoxLayout()
+        self.defaults_row = QHBoxLayout()
         self.set_defaults_button = QPushButton("Reset to Default?")
         self.set_defaults_button.setSizePolicy(
             QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
         self.set_defaults_button.clicked.connect(self.set_defaults)
-        self.def_row.addWidget(self.set_defaults_button)
-        self.l.addLayout(self.def_row)
+        self.defaults_row.addWidget(self.set_defaults_button)
+        self.layout.addLayout(self.defaults_row)
 
         # Risizes to fit
         self.resize(self.sizeHint())
