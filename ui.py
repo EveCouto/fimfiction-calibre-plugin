@@ -210,8 +210,11 @@ class InterfacePlugin(InterfaceAction):
                 # Merges the books
                 merged_epub = merge_books(
                     tdir, temp_epub, merge_path,
-                    prefs["do_backups"], prefs["backup_path"])
-
+                    prefs["do_backups"], prefs["backup_path"],
+                    prefs["do_check_metadata"])
+                if not merged_epub:
+                    raise Exception(
+                        "Metadata did not match. No files changed.")
                 db.add_format(book_id, "EPUB", merged_epub, replace=True)
         except Exception as e:
             return error_dialog(

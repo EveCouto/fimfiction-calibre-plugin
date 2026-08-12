@@ -6,6 +6,31 @@ import xml.etree.ElementTree as ET
 from datetime import datetime
 
 
+def check_metadata(opf1, opf2):
+    # Setting up XML parsing
+    NS = {"opf": "http://www.idpf.org/2007/opf",
+          "dc": "http://purl.org/dc/elements/1.1/"}
+    ET.register_namespace("", NS["opf"])
+    ET.register_namespace("dc", NS["dc"])
+
+    # Initializess the XMLs
+    root1 = ET.fromstring(opf1)
+    root2 = ET.fromstring(opf2)
+
+    metadata1 = root1.find("opf:metadata", NS)
+    metadata2 = root2.find("opf:metadata", NS)
+    identifier1 = metadata1.find("dc:identifier", NS)
+    identifier2 = metadata2.find("dc:identifier", NS)
+    title1 = metadata1.find("dc:title", NS)
+    title2 = metadata2.find("dc:title", NS)
+    creator1 = metadata1.find("dc:creator", NS)
+    creator2 = metadata2.find("dc:creator", NS)
+
+    return (identifier1.text == identifier2.text and
+            title1.text == title2.text and
+            creator1.text == creator2.text)
+
+
 def merge_opf(opf1: bytes, opf2: bytes) -> bytes:
     """Takes 2 opf files and combines their data
 
@@ -18,9 +43,10 @@ def merge_opf(opf1: bytes, opf2: bytes) -> bytes:
     """
 
     # Setting up XML parsing
-    NS = {"opf": "http://www.idpf.org/2007/opf"}
+    NS = {"opf": "http://www.idpf.org/2007/opf",
+          "dc": "http://purl.org/dc/elements/1.1/"}
     ET.register_namespace("", NS["opf"])
-    ET.register_namespace("dc", "http://purl.org/dc/elements/1.1/")
+    ET.register_namespace("dc", NS["dc"])
 
     # Initializess the XMLs
     root1 = ET.fromstring(opf1)
@@ -52,7 +78,7 @@ def merge_opf(opf1: bytes, opf2: bytes) -> bytes:
     return ET.tostring(root1, encoding="utf-8", xml_declaration=True)
 
 
-def merge_epub(old_path: str, new_path: str, out_path: str):
+def merge_epub(old_path: str, new_path: str, out_path: str, meta_check: bool):
     """Takes 2 epub files, outputs the combined epub
 
     Args:
@@ -66,15 +92,26 @@ def merge_epub(old_path: str, new_path: str, out_path: str):
           zipfile.ZipFile(new_path) as new_zip,
           zipfile.ZipFile(out_path, "w") as out_zip):
 
+        for old_zip_info in old_zip.infolist():
+            if ".opf" in old_zip_info.filename:
+                with old_zip.open(old_zip_info) as in_file:
+                    old_opf = in_file.read()
+
+        for new_zip_info in new_zip.infolist():
+            if ".opf" in new_zip_info.filename:
+                with new_zip.open(new_zip_info) as in_file:
+                    new_opf = in_file.read()
+
+        if meta_check and not check_metadata(old_opf, new_opf):
+            return False
+
         # Adds old epub files to temp epub
         for old_zip_info in old_zip.infolist():
             with old_zip.open(old_zip_info) as in_file:
                 content = in_file.read()
-            if ".opf" in old_zip_info.filename:
-                old_opf = content
             # Skips config files where new version is needed
-            elif ("toc.html" not in old_zip_info.filename and
-                  ".ncx" not in old_zip_info.filename):
+            if ("toc.html" not in old_zip_info.filename and
+                    ".ncx" not in old_zip_info.filename):
                 out_zip.writestr(old_zip_info.filename, content)
 
         # Adds files not already added to the temp epub
@@ -83,18 +120,17 @@ def merge_epub(old_path: str, new_path: str, out_path: str):
             if new_zip_info.filename not in current_files:
                 with new_zip.open(new_zip_info) as in_file:
                     content = in_file.read()
-                if ".opf" in new_zip_info.filename:
-                    new_opf = content
-                else:
                     out_zip.writestr(new_zip_info.filename, content)
 
         # Adds the opf file to the temp epub
         merged_opf = merge_opf(old_opf, new_opf)
         out_zip.writestr("book.opf", merged_opf)
 
+    return True
+
 
 def merge_books(temp_dir: str, original_book_path: str, merge_book_path: str,
-                backup: bool, backup_path: str) -> str:
+                backup: bool, backup_path: str, meta_check: bool) -> str:
     """Merges books and saves a copy to backup folder.
 
     Args:
@@ -112,7 +148,9 @@ def merge_books(temp_dir: str, original_book_path: str, merge_book_path: str,
     temp_path = os.path.join(temp_dir, temp_file)
 
     # Merges the files into temp_path
-    merge_epub(original_book_path, merge_book_path, temp_path)
+    if not merge_epub(original_book_path, merge_book_path,
+                      temp_path, meta_check):
+        return False
 
     # Backups
     if backup:
