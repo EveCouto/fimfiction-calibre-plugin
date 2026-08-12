@@ -1,6 +1,7 @@
 from calibre.utils.config import JSONConfig
 from qt.core import (QVBoxLayout, QHBoxLayout, QLabel, QFrame, QWidget,
-                     QCheckBox, QSizePolicy, QFileDialog, QPushButton, Qt)
+                     QComboBox, QCheckBox, QSizePolicy, QFileDialog,
+                     QPushButton, Qt)
 import os
 
 
@@ -10,6 +11,8 @@ prefs.defaults["do_backups"] = False
 prefs.defaults["backup_path"] = ""
 prefs.defaults["do_auto_fix"] = False
 prefs.defaults["do_retry_fix"] = False
+prefs.defaults["do_check_metadata"] = False
+prefs.defaults["main_button"] = "Merge Books"
 
 
 class ConfigWidget(QWidget):
@@ -34,6 +37,25 @@ class ConfigWidget(QWidget):
         self.title_spacer.setFrameShape(QFrame.Shape.HLine)
         self.title_spacer.setFrameShadow(QFrame.Shadow.Sunken)
         self.layout.addWidget(self.title_spacer)
+        self.layout.addSpacing(10)
+
+        # Main Button Dropdown
+        self.main_button_row = QHBoxLayout()
+        self.main_button_label = QLabel("Main Button Function:")
+        self.main_button_row.addWidget(self.main_button_label)
+        self.main_button_dropdown = QComboBox()
+        self.main_button_dropdown.addItems(
+            ["Fix Images", "Merge Books"])
+        self.main_button_dropdown.setCurrentText(prefs["main_button"])
+        self.main_button_row.addWidget(self.main_button_dropdown)
+        self.layout.addLayout(self.main_button_row)
+
+        # Main Button Spacer
+        self.layout.addSpacing(10)
+        self.main_button_spacer = QFrame()
+        self.main_button_spacer.setFrameShape(QFrame.Shape.HLine)
+        self.main_button_spacer.setFrameShadow(QFrame.Shadow.Sunken)
+        self.layout.addWidget(self.main_button_spacer)
         self.layout.addSpacing(10)
 
         # Backup Checkbox
@@ -63,10 +85,23 @@ class ConfigWidget(QWidget):
         self.layout.addWidget(self.backup_spacer)
         self.layout.addSpacing(10)
 
+        # Merge Metadata Check
+        self.merge_check_row = QHBoxLayout()
+        self.merge_check_label = QLabel(
+            "Check Metadata \non Merge Books?")
+        self.merge_check_row.addWidget(self.merge_check_label)
+        self.merge_check_checkbox = QCheckBox()
+        self.merge_check_checkbox.setChecked(prefs["do_check_metadata"])
+        self.merge_check_row.addWidget(self.merge_check_checkbox)
+        self.layout.addLayout(self.merge_check_row)
+
+        # Small Spacing
+        self.layout.addSpacing(10)
+
         # Do Automatic image fix
         self.auto_fix_row = QHBoxLayout()
         self.auto_fix_check_label = QLabel(
-            "Auto-run Fix Images \non Merge Book?")
+            "Auto-run Fix Images \non Merge Books?")
         self.auto_fix_row.addWidget(self.auto_fix_check_label)
         self.auto_fix_checkbox = QCheckBox()
         self.auto_fix_checkbox.setChecked(prefs["do_auto_fix"])
@@ -79,14 +114,14 @@ class ConfigWidget(QWidget):
         # Do retry image fix
         self.retry_fix_row = QHBoxLayout()
         self.retry_image_label = QLabel(
-            "Retry failed images \non Image Fix?")
+            "Retry failed images \non Fix Images?")
         self.retry_fix_row.addWidget(self.retry_image_label)
         self.retry_image_checkbox = QCheckBox()
         self.retry_image_checkbox.setChecked(prefs["do_retry_fix"])
         self.retry_fix_row.addWidget(self.retry_image_checkbox)
         self.layout.addLayout(self.retry_fix_row)
 
-        # Image fix spacer
+        # Image fix Spacer
         self.layout.addSpacing(10)
         self.image_fix_spacer = QFrame()
         self.image_fix_spacer.setFrameShape(QFrame.Shape.HLine)
@@ -107,8 +142,11 @@ class ConfigWidget(QWidget):
         self.resize(self.sizeHint())
 
     def set_defaults(self):
+        self.main_button_dropdown.setCurrentText(prefs.defaults["main_button"])
         self.backup_checkbox.setChecked(prefs.defaults["do_backups"])
         self.backup_dir_button.setText(prefs.defaults["backup_path"])
+        self.merge_check_checkbox.setChecked(
+            prefs.defaults["do_check_metadata"])
         self.auto_fix_checkbox.setChecked(prefs.defaults["do_auto_fix"])
         self.retry_image_checkbox.setChecked(prefs.defaults["do_retry_fix"])
         self.resize(self.sizeHint())
@@ -134,7 +172,9 @@ class ConfigWidget(QWidget):
 
     def save_settings(self):
         # Updates the preferences file
+        prefs["main_button"] = self.main_button_dropdown.currentText()
         prefs["do_backups"] = self.backup_checkbox.isChecked()
         prefs["backup_path"] = self.backup_dir_button.text()
+        prefs["do_check_metadata"] = self.merge_check_checkbox.isChecked()
         prefs["do_auto_fix"] = self.auto_fix_checkbox.isChecked()
         prefs["do_retry_fix"] = self.retry_image_checkbox.isChecked()
