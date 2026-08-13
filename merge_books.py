@@ -32,12 +32,12 @@ def check_metadata(opf1, opf2):
         raise Exception("Metadata did not match")
 
 
-def merge_opf(opf1: bytes, opf2: bytes) -> bytes:
+def merge_opf(old_opf: bytes, new_opf: bytes) -> bytes:
     """Takes 2 opf files and combines their data
 
     Args:
-        opf1 (bytes): opf1 file contents
-        opf2 (bytes): opf2 file contents
+        old_opf (bytes): old_opf file contents
+        new_opf (bytes): new_opf file contents
 
     Returns:
         bytes: combined opf file contents
@@ -50,33 +50,33 @@ def merge_opf(opf1: bytes, opf2: bytes) -> bytes:
     ET.register_namespace("dc", NS["dc"])
 
     # Initializess the XMLs
-    root1 = ET.fromstring(opf1)
-    root2 = ET.fromstring(opf2)
+    old_root = ET.fromstring(old_opf)
+    new_root = ET.fromstring(new_opf)
 
     # Merge opf manifests
-    manifest1 = root1.find("opf:manifest", NS)
-    manifest2 = root2.find("opf:manifest", NS)
+    old_manifest = old_root.find("opf:manifest", NS)
+    new_manifest = new_root.find("opf:manifest", NS)
 
-    seen = {item.get("id") for item in manifest1}
+    seen = {item.get("id") for item in new_manifest}
 
-    for item in manifest2:
+    for item in old_manifest:
         if item.get("id") not in seen:
-            manifest1.append(item)
+            new_manifest.append(item)
             seen.add(item.get("id"))
 
     # Merge opf spines
-    spine1 = root1.find("opf:spine", NS)
-    spine2 = root2.find("opf:spine", NS)
+    old_spine = old_root.find("opf:spine", NS)
+    new_spine = new_root.find("opf:spine", NS)
 
-    seen = {item.get("idref") for item in spine1}
+    seen = {item.get("idref") for item in new_spine}
 
-    for item in spine2:
+    for item in old_spine:
         if item.get("idref") not in seen:
-            spine1.append(item)
+            new_spine.append(item)
             seen.add(item.get("idref"))
 
     # Returns the merged opf
-    return ET.tostring(root1, encoding="utf-8", xml_declaration=True)
+    return ET.tostring(new_root, encoding="utf-8", xml_declaration=True)
 
 
 def merge_epub(old_path: str, new_path: str, out_path: str, meta_check: bool):
