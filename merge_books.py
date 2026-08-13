@@ -79,6 +79,59 @@ def merge_opf(old_opf: bytes, new_opf: bytes) -> bytes:
     return ET.tostring(new_root, encoding="utf-8", xml_declaration=True)
 
 
+def merge_epub_full(old_path: str, new_path: str,
+                    out_path: str, meta_check: bool):
+    """Takes 2 epub files, outputs the combined epub
+
+        Args:
+            old_path (str): original epub path
+            new_path (str): updated epub path
+            out_path (str): output path
+            meta_check (bool): will run meta check
+        """
+
+    # Sets all files to be opened
+    with (zipfile.ZipFile(old_path) as old_zip,
+            zipfile.ZipFile(new_path) as new_zip,
+            zipfile.ZipFile(out_path, "w") as out_zip):
+
+        # Gets the opf contents from both zips
+        for old_zip_info in old_zip.infolist():
+            if ".opf" in old_zip_info.filename:
+                with old_zip.open(old_zip_info) as in_file:
+                    old_opf = in_file.read()
+
+        for new_zip_info in new_zip.infolist():
+            if ".opf" in new_zip_info.filename:
+                with new_zip.open(new_zip_info) as in_file:
+                    new_opf = in_file.read()
+                    opf_name = new_zip_info.filename
+
+        # Checks metadata if set
+        if meta_check:
+            check_metadata(old_opf, new_opf)
+
+        # Takes all files from the new zip
+        for new_zip_info in new_zip.infolist():
+            if ".opf" not in new_zip_info.filename:
+                with new_zip.open(new_zip_info) as in_file:
+                    content = in_file.read()
+                    out_zip.writestr(new_zip_info.filename, content)
+
+        # Takes the remaining files from the old zip
+        current_files = out_zip.namelist()
+        for old_zip_info in old_zip.infolist():
+            if (old_zip_info.filename not in current_files and
+                    ".opf" not in old_zip_info.filename):
+                with old_zip.open(old_zip_info) as in_file:
+                    content = in_file.read()
+                    out_zip.writestr(old_zip_info.filename, content)
+
+        # Adds the opf file to the temp epub
+        merged_opf = merge_opf(old_opf, new_opf)
+        out_zip.writestr(opf_name, merged_opf)
+
+
 def merge_epub(old_path: str, new_path: str, out_path: str, meta_check: bool):
     """Takes 2 epub files, outputs the combined epub
 
@@ -86,6 +139,7 @@ def merge_epub(old_path: str, new_path: str, out_path: str, meta_check: bool):
         old_path (str): original epub path
         new_path (str): updated epub path
         out_path (str): output path
+        meta_check (bool): will run meta check
     """
 
     # Sets all files to be opened
@@ -128,8 +182,9 @@ def merge_epub(old_path: str, new_path: str, out_path: str, meta_check: bool):
         out_zip.writestr("book.opf", merged_opf)
 
 
-def merge_books(temp_dir: str, original_book_path: str, merge_book_path: str,
-                backup: bool, backup_path: str, meta_check: bool) -> str:
+def merge_books(temp_dir: str, original_book_path: str,
+                merge_book_path: str, backup: bool, backup_path: str,
+                meta_check: bool, full_merge: bool) -> str:
     """Merges books and saves a copy to backup folder.
 
     Args:
@@ -147,8 +202,12 @@ def merge_books(temp_dir: str, original_book_path: str, merge_book_path: str,
     temp_path = os.path.join(temp_dir, temp_file)
 
     # Merges the files into temp_path
-    merge_epub(original_book_path, merge_book_path,
-               temp_path, meta_check)
+    if full_merge:
+        merge_epub_full(original_book_path, merge_book_path,
+                        temp_path, meta_check)
+    else:
+        merge_epub(original_book_path, merge_book_path,
+                   temp_path, meta_check)
 
     # Backups
     if backup:
