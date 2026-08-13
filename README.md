@@ -18,11 +18,15 @@ Config plugin contains all the setting that the plugin currently supports.
 
 All optional features are disabled by default and it is recommended to check it out on install.
 
-### Main Button
+### About Plugin
+
+Shows this information in Calibre.
+
+### Main Button Function
 
 Allows for choosing what the main button in the Calibre UI does, supports all functions that the plugin has.
 
-### Backups
+### Backup Files and Folder
 
 Gvies the ability to turn on backing up the files, uses file explorer to choose a folder.
 
@@ -30,11 +34,11 @@ Any edits made using this plugin will be backed up to the designated folder. Thi
 
 \*Note: When using the Fix Images + Retry or Always retry is enabled, it will backup even if no changes made.\*
 
-### Check Metadata on Merge
+### Check Metadata on Merge Books
 
 Will check the metadata, specifially the identifier (isbn or uri), title, and creator (author) of both epubs, if they are not identical it fails.
 
-### Auto-run Fix Images on Merge
+### Auto-run Fix Images on Merge Books
 
 Will automatically run the Fix Images function after merging epubs.
 
@@ -44,19 +48,25 @@ Every time the fix images is run, it will attempt to retry failed images.
 
 \*Note: When ennabled, it will backup (if backup enabled) even if no changes made.\*
 
-## Merge
+## Merge Books
 
 Select one book in the Calibre library, when Merge is run a file dialog will appear.
 
 Now select the new updated version of the epub, ie old version has 10 chapters and new version has 20.
 
-The plugin will then merge the files giving priority to the original, so it will only add chapters but, not edit the older chapters
+The plugin will then merge the files giving priority to the original, so it will only add chapters but, not edit the older chapters.
 
 It's primary use is not overriding the images added in the next section.
 
 \*Note: If a book changes the order of chapters, merge will not work correctly.\*
 
 Example of this is if a prequel chapter is added to the beginning of a book, it will not add them, but add duplicates of the most recent chapter.
+
+## Merge Books Full
+
+The same as Merge Books, but it prioritizes the new file. This fixes the issue mentioned in Merge Books.
+
+It is left as its own function because of how it is run, Merge Books Full must run Fix Images automatically after a merge.
 
 ## Fix Images
 

@@ -1,7 +1,7 @@
 from calibre.utils.config import JSONConfig
 from qt.core import (QVBoxLayout, QHBoxLayout, QLabel, QFrame, QWidget,
                      QComboBox, QCheckBox, QSizePolicy, QFileDialog,
-                     QPushButton, Qt)
+                     QPushButton, QDialog, QTextBrowser, Qt)
 import os
 
 
@@ -32,11 +32,21 @@ class ConfigWidget(QWidget):
         self.title_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.layout.addWidget(self.title_label)
 
-        # Title Spacer
-        self.title_spacer = QFrame()
-        self.title_spacer.setFrameShape(QFrame.Shape.HLine)
-        self.title_spacer.setFrameShadow(QFrame.Shadow.Sunken)
-        self.layout.addWidget(self.title_spacer)
+        # About Button
+        self.about_button_row = QHBoxLayout()
+        self.about_button = QPushButton("About Plugin")
+        self.about_button.setSizePolicy(
+            QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
+        self.about_button.clicked.connect(self.show_about_dialog)
+        self.about_button_row.addWidget(self.about_button)
+        self.layout.addLayout(self.about_button_row)
+
+        # About Button Spacer
+        self.layout.addSpacing(10)
+        self.about_button_spacer = QFrame()
+        self.about_button_spacer.setFrameShape(QFrame.Shape.HLine)
+        self.about_button_spacer.setFrameShadow(QFrame.Shadow.Sunken)
+        self.layout.addWidget(self.about_button_spacer)
         self.layout.addSpacing(10)
 
         # Main Button Dropdown
@@ -171,6 +181,22 @@ class ConfigWidget(QWidget):
             backup_dir = prefs["backup_path"]
         self.backup_dir_button.setText(backup_dir)
         self.resize(self.sizeHint())
+
+    def show_about_dialog(self):
+        # Shows an about dialog
+        text = get_resources("README.html").decode('utf-8')
+        dialog = QDialog(self)
+        dialog.setWindowTitle("About FimFiction Ebook Plugin")
+        dialog.resize(500, 500)
+
+        layout = QVBoxLayout(dialog)
+
+        browser = QTextBrowser()
+        browser.setHtml(text)
+        browser.setOpenExternalLinks(True)
+        layout.addWidget(browser)
+
+        dialog.exec()
 
     def save_settings(self):
         # Updates the preferences file
