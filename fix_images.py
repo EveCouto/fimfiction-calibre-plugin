@@ -196,7 +196,7 @@ def update_zip(in_zip_path: str, out_zip_path: str,
                 for img in file_to_img[in_zip_info.filename]:
                     # Sets cleaner variable names
                     link = img["link"]
-                    name = os.path.basename(link)
+                    name = f"images/{os.path.basename(link)}"
 
                     # updates the html link to point at file
                     content = content.replace(
@@ -207,7 +207,7 @@ def update_zip(in_zip_path: str, out_zip_path: str,
                     if link in links and name not in all_in_files:
                         # Gets image and writes the data to the zip
                         if img_bytes := request_image(link, log):
-                            out_zip.writestr(f"{"images/" + name}", img_bytes)
+                            out_zip.writestr(name, img_bytes)
                             links.discard(link)
                             successful_links.add(link)
                         else:
@@ -225,8 +225,8 @@ def update_zip(in_zip_path: str, out_zip_path: str,
             # Runs through the opf data file
             if ".opf" in in_zip_info.filename:
                 opf_file = in_zip_info.filename
-
-            out_zip.writestr(in_zip_info.filename, content)
+            else:
+                out_zip.writestr(in_zip_info.filename, content)
 
         if opf_file:
             with in_zip.open(opf_file) as in_file:
