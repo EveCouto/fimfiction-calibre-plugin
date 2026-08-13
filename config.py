@@ -12,7 +12,7 @@ prefs.defaults["backup_path"] = ""
 prefs.defaults["do_auto_fix"] = False
 prefs.defaults["do_retry_fix"] = False
 prefs.defaults["do_check_metadata"] = False
-prefs.defaults["main_button"] = "Merge Books"
+prefs.defaults["main_button"] = "Config Plugin"
 
 
 class ConfigWidget(QWidget):
@@ -45,8 +45,9 @@ class ConfigWidget(QWidget):
         self.main_button_row.addWidget(self.main_button_label)
         self.main_button_dropdown = QComboBox()
         self.main_button_dropdown.addItems(
-            ["Merge Books", "Fix Images",
-             "Fix Images + Retry", "Config Plugin"])
+            ["Merge Books", "Merge Books Full",
+             "Fix Images", "Fix Images + Retry",
+             "Config Plugin"])
         self.main_button_dropdown.setCurrentText(prefs["main_button"])
         self.main_button_row.addWidget(self.main_button_dropdown)
         self.layout.addLayout(self.main_button_row)

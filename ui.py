@@ -28,7 +28,15 @@ class InterfacePlugin(InterfaceAction):
             self.menu,
             unique_name="merge_books",
             text="Merge Books",
-            triggered=self.open_book_merge
+            triggered=self.do_open_book_merge
+        )
+
+        # Merge Books sub menu
+        self.create_menu_action(
+            self.menu,
+            unique_name="merge_books_full",
+            text="Merge Books Full",
+            triggered=self.do_open_book_merge_full
         )
 
         # Fix images sub menu
@@ -36,7 +44,7 @@ class InterfacePlugin(InterfaceAction):
             self.menu,
             unique_name="image_fix",
             text="Fix Images",
-            triggered=self.start_image_fix
+            triggered=self.do_start_image_fix
         )
 
         # Fix Images + Retry sub menu
@@ -44,7 +52,7 @@ class InterfacePlugin(InterfaceAction):
             self.menu,
             unique_name="image_fix_retry",
             text="Fix Images + Retry",
-            triggered=self.start_image_fix_retry
+            triggered=self.do_start_image_fix_retry
         )
 
         # Config Plugin sub menu
@@ -60,45 +68,36 @@ class InterfacePlugin(InterfaceAction):
         """
         from calibre_plugins.fimfic_fix.config import prefs
         function_dict = {
-            "Merge Books": self.open_book_merge,
-            "Fix Images": self.start_image_fix,
-            "Fix Images + Retry": self.start_image_fix_retry,
+            "Merge Books": self.do_open_book_merge,
+            "Merge Books Full": self.do_open_book_merge_full,
+            "Fix Images": self.do_start_image_fix,
+            "Fix Images + Retry": self.do_start_image_fix_retry,
             "Config Plugin": self.open_config
         }
         function_dict[prefs["main_button"]]()
 
-    def start_image_fix_retry(self):
-        """Starts the image fix + retry job"""
-        # Imports
-        from calibre.gui2.threaded_jobs import ThreadedJob
-        from calibre.gui2 import error_dialog
+    def do_open_book_merge(self):
+        """Runs the open book merge"""
+        self.open_book_merge(full_merge=False)
 
-        # Get selected books in library
-        rows = self.gui.library_view.selectionModel().selectedRows()
+    def do_open_book_merge_full(self):
+        """Runs the open book merge full"""
+        self.open_book_merge(full_merge=True)
 
-        # Ensures items selected in Calibre
-        if not rows:
-            return error_dialog(
-                self.gui, 'Error', 'Nothing Selected', show=True)
+    def do_start_image_fix(self):
+        """Runs the start image fix"""
+        self.start_image_fix(retry=False)
 
-        # List of Calibre IDs used in the actual job
-        book_ids = list(map(self.gui.library_view.model().id, rows))
+    def do_start_image_fix_retry(self):
+        """Runs the start image fix with retry"""
+        self.start_image_fix(retry=True)
 
-        # Creates the job object
-        job = ThreadedJob(
-            "fimfic_fix_fix_images",
-            "Fixing images",
-            self.run_image_fix,
-            (book_ids, True),
-            {},
-            self.image_fix_finished
-        )
+    def start_image_fix(self, retry: bool):
+        """Starts the image fix job
 
-        # Runs the job
-        self.gui.job_manager.run_threaded_job(job)
-
-    def start_image_fix(self):
-        """Starts the image fix job"""
+        Args:
+            retry (bool): will retry images on true
+        """
 
         # Imports
         from calibre.gui2.threaded_jobs import ThreadedJob
@@ -120,7 +119,7 @@ class InterfacePlugin(InterfaceAction):
             "fimfic_fix_fix_images",
             "Fixing images",
             self.run_image_fix,
-            (book_ids,),
+            (book_ids, retry),
             {},
             self.image_fix_finished
         )
@@ -217,8 +216,12 @@ class InterfacePlugin(InterfaceAction):
         if job.abort:
             return
 
-    def open_book_merge(self):
-        """Runs the book merge functionality"""
+    def open_book_merge(self, full_merge: bool):
+        """Runs the book merge functionality
+
+        Args:
+            full_merge (bool): does full merge on true
+        """
 
         # Imports
         from calibre_plugins.fimfic_fix.merge_books import merge_books
@@ -265,21 +268,21 @@ class InterfacePlugin(InterfaceAction):
                 merged_epub = merge_books(
                     tdir, temp_epub, merge_path,
                     prefs["do_backups"], prefs["backup_path"],
-                    prefs["do_check_metadata"])
+                    prefs["do_check_metadata"], full_merge)
                 db.add_format(book_id, "EPUB", merged_epub, replace=True)
         except Exception as e:
             return error_dialog(
                 self.gui, 'Error', f'Error: {e}', show=True)
 
-        if prefs["do_auto_fix"]:
-            self.start_image_fix()
+        if prefs["do_auto_fix"] or full_merge:
+            self.start_image_fix(retry=prefs["do_retry_fix"])
 
         # Simple dialog on completion
         dialog_str = (
             f"Book: '{mi.title}' has been merged with, '{merge_path}'.\n")
         if prefs["do_backups"]:
             dialog_str += f"\nBackup saved to '{prefs['backup_path']}'\n"
-        if prefs["do_auto_fix"]:
+        if prefs["do_auto_fix"] or full_merge:
             dialog_str += (f"\nFix Images ran on '{mi.title}', " +
                            "check jobs to see progress\n")
 
