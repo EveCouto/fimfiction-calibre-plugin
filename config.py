@@ -14,6 +14,12 @@ prefs.defaults["do_retry_fix"] = False
 prefs.defaults["do_check_metadata"] = False
 prefs.defaults["main_button"] = "Config Plugin"
 
+prefs.defaults["show_merge"] = True
+prefs.defaults["show_merge_full"] = True
+prefs.defaults["show_fix"] = True
+prefs.defaults["show_fix_retry"] = True
+prefs.defaults["show_config"] = True
+
 
 class ConfigWidget(QWidget):
 
@@ -141,6 +147,59 @@ class ConfigWidget(QWidget):
         self.layout.addWidget(self.image_fix_spacer)
         self.layout.addSpacing(10)
 
+        # Show merge
+        self.show_merge_row = QHBoxLayout()
+        self.show_merge_label = QLabel("Show Merge Books:")
+        self.show_merge_row.addWidget(self.show_merge_label)
+        self.show_merge_checkbox = QCheckBox()
+        self.show_merge_checkbox.setChecked(prefs["show_merge"])
+        self.show_merge_row.addWidget(self.show_merge_checkbox)
+        self.layout.addLayout(self.show_merge_row)
+
+        # Show merge full
+        self.show_merge_full_row = QHBoxLayout()
+        self.show_merge_full_label = QLabel("Show Merge Books Full:")
+        self.show_merge_full_row.addWidget(self.show_merge_full_label)
+        self.show_merge_full_checkbox = QCheckBox()
+        self.show_merge_full_checkbox.setChecked(prefs["show_merge_full"])
+        self.show_merge_full_row.addWidget(self.show_merge_full_checkbox)
+        self.layout.addLayout(self.show_merge_full_row)
+
+        # Show fix
+        self.show_fix_row = QHBoxLayout()
+        self.show_fix_label = QLabel("Show Fix Images:")
+        self.show_fix_row.addWidget(self.show_fix_label)
+        self.show_fix_checkbox = QCheckBox()
+        self.show_fix_checkbox.setChecked(prefs["show_fix"])
+        self.show_fix_row.addWidget(self.show_fix_checkbox)
+        self.layout.addLayout(self.show_fix_row)
+
+        # Show fix + retry
+        self.show_fix_retry_row = QHBoxLayout()
+        self.show_fix_retry_label = QLabel("Show Fix Images + Retry:")
+        self.show_fix_retry_row.addWidget(self.show_fix_retry_label)
+        self.show_fix_retry_checkbox = QCheckBox()
+        self.show_fix_retry_checkbox.setChecked(prefs["show_fix_retry"])
+        self.show_fix_retry_row.addWidget(self.show_fix_retry_checkbox)
+        self.layout.addLayout(self.show_fix_retry_row)
+
+        # Show config
+        self.show_config_row = QHBoxLayout()
+        self.show_config_label = QLabel("Show Config Plugin:")
+        self.show_config_row.addWidget(self.show_config_label)
+        self.show_config_checkbox = QCheckBox()
+        self.show_config_checkbox.setChecked(prefs["show_config"])
+        self.show_config_row.addWidget(self.show_config_checkbox)
+        self.layout.addLayout(self.show_config_row)
+
+        # Defaults Spacer
+        self.layout.addSpacing(10)
+        self.defaults_spacer = QFrame()
+        self.defaults_spacer.setFrameShape(QFrame.Shape.HLine)
+        self.defaults_spacer.setFrameShadow(QFrame.Shadow.Sunken)
+        self.layout.addWidget(self.defaults_spacer)
+        self.layout.addSpacing(10)
+
         # Set Defaults
         self.defaults_row = QHBoxLayout()
         self.set_defaults_button = QPushButton("Reset to Default?")
@@ -161,6 +220,15 @@ class ConfigWidget(QWidget):
             prefs.defaults["do_check_metadata"])
         self.auto_fix_checkbox.setChecked(prefs.defaults["do_auto_fix"])
         self.retry_image_checkbox.setChecked(prefs.defaults["do_retry_fix"])
+
+        self.show_merge_checkbox.setChecked(prefs.defaults["show_merge"])
+        self.show_merge_full_checkbox.setChecked(
+            prefs.defaults["show_merge_full"])
+        self.show_fix_checkbox.setChecked(prefs.defaults["show_fix"])
+        self.show_fix_retry_checkbox.setChecked(
+            prefs.defaults["show_fix_retry"])
+        self.show_config_checkbox.setChecked(prefs.defaults["show_config"])
+
         self.resize(self.sizeHint())
 
     def check_path(self):
@@ -206,3 +274,9 @@ class ConfigWidget(QWidget):
         prefs["do_check_metadata"] = self.merge_check_checkbox.isChecked()
         prefs["do_auto_fix"] = self.auto_fix_checkbox.isChecked()
         prefs["do_retry_fix"] = self.retry_image_checkbox.isChecked()
+
+        prefs["show_merge"] = self.show_merge_checkbox.isChecked()
+        prefs["show_merge_full"] = self.show_merge_full_checkbox.isChecked()
+        prefs["show_fix"] = self.show_fix_checkbox.isChecked()
+        prefs["show_fix_retry"] = self.show_fix_retry_checkbox.isChecked()
+        prefs["show_config"] = self.show_config_checkbox.isChecked()

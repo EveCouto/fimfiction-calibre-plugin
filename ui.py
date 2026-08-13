@@ -12,6 +12,9 @@ class InterfacePlugin(InterfaceAction):
 
     def genesis(self):
         """Sets up the UI elements in Calibre"""
+
+        from calibre_plugins.fimfic_fix.config import prefs
+
         # Icons
         icon = get_icons('images/icon.png', "Fimfiction Ebook Plugin")
         self.qaction.setIcon(icon)
@@ -24,44 +27,49 @@ class InterfacePlugin(InterfaceAction):
         self.qaction.setMenu(self.menu)
 
         # Merge Books sub menu
-        self.create_menu_action(
-            self.menu,
-            unique_name="merge_books",
-            text="Merge Books",
-            triggered=self.do_open_book_merge
-        )
+        if prefs["show_merge"]:
+            self.create_menu_action(
+                self.menu,
+                unique_name="merge_books",
+                text="Merge Books",
+                triggered=self.do_open_book_merge
+            )
 
         # Merge Books sub menu
-        self.create_menu_action(
-            self.menu,
-            unique_name="merge_books_full",
-            text="Merge Books Full",
-            triggered=self.do_open_book_merge_full
-        )
+        if prefs["show_merge_full"]:
+            self.create_menu_action(
+                self.menu,
+                unique_name="merge_books_full",
+                text="Merge Books Full",
+                triggered=self.do_open_book_merge_full
+            )
 
         # Fix images sub menu
-        self.create_menu_action(
-            self.menu,
-            unique_name="image_fix",
-            text="Fix Images",
-            triggered=self.do_start_image_fix
-        )
+        if prefs["show_fix"]:
+            self.create_menu_action(
+                self.menu,
+                unique_name="image_fix",
+                text="Fix Images",
+                triggered=self.do_start_image_fix
+            )
 
         # Fix Images + Retry sub menu
-        self.create_menu_action(
-            self.menu,
-            unique_name="image_fix_retry",
-            text="Fix Images + Retry",
-            triggered=self.do_start_image_fix_retry
-        )
+        if prefs["show_fix_retry"]:
+            self.create_menu_action(
+                self.menu,
+                unique_name="image_fix_retry",
+                text="Fix Images + Retry",
+                triggered=self.do_start_image_fix_retry
+            )
 
         # Config Plugin sub menu
-        self.create_menu_action(
-            self.menu,
-            unique_name="config_plugin",
-            text="Config Plugin",
-            triggered=self.open_config
-        )
+        if prefs["show_config"]:
+            self.create_menu_action(
+                self.menu,
+                unique_name="config_plugin",
+                text="Config Plugin",
+                triggered=self.open_config
+            )
 
     def do_main_button(self):
         """Runs the function that the main button is associated with
