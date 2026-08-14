@@ -11,13 +11,15 @@ class FimfictionEbookPlugin(InterfaceActionBase):
                    'and fixing images in FimFiction epub')
     minimum_calibre_version = (9, 11, 0)
 
-    actual_plugin = 'calibre_plugins.fimfic_fix.ui:InterfacePlugin'
+    actual_plugin = (
+        'calibre_plugins.fimfic_merge_fix_evecouto.ui:InterfacePlugin')
 
     def is_customizable(self):
         return True
 
     def config_widget(self):
-        from calibre_plugins.fimfic_fix.config import ConfigWidget
+        from calibre_plugins.fimfic_merge_fix_evecouto.config import (
+            ConfigWidget)
         return ConfigWidget()
 
     def save_settings(self, config_widget):

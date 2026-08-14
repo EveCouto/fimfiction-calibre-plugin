@@ -13,7 +13,7 @@ class InterfacePlugin(InterfaceAction):
     def genesis(self):
         """Sets up the UI elements in Calibre"""
 
-        from calibre_plugins.fimfic_fix.config import prefs
+        from calibre_plugins.fimfic_merge_fix_evecouto.config import prefs
 
         # Icons
         icon = get_icons('images/icon.png', "Fimfiction Ebook Plugin")
@@ -74,7 +74,7 @@ class InterfacePlugin(InterfaceAction):
     def do_main_button(self):
         """Runs the function that the main button is associated with
         """
-        from calibre_plugins.fimfic_fix.config import prefs
+        from calibre_plugins.fimfic_merge_fix_evecouto.config import prefs
         function_dict = {
             "Merge Books": self.do_open_book_merge,
             "Merge Books Full": self.do_open_book_merge_full,
@@ -148,9 +148,10 @@ class InterfacePlugin(InterfaceAction):
 
         # Imports
         import os
-        from calibre_plugins.fimfic_fix.fix_images import fix_images
+        from calibre_plugins.fimfic_merge_fix_evecouto.fix_images import (
+            fix_images)
         from calibre.ptempfile import TemporaryDirectory
-        from calibre_plugins.fimfic_fix.config import prefs
+        from calibre_plugins.fimfic_merge_fix_evecouto.config import prefs
 
         # Gets the database from Calibre
         db = self.gui.current_db.new_api
@@ -232,11 +233,12 @@ class InterfacePlugin(InterfaceAction):
         """
 
         # Imports
-        from calibre_plugins.fimfic_fix.merge_books import merge_books
+        from calibre_plugins.fimfic_merge_fix_evecouto.merge_books import (
+            merge_books)
         from calibre.gui2 import info_dialog, error_dialog
         from calibre.ptempfile import TemporaryDirectory
         from qt.core import QFileDialog
-        from calibre_plugins.fimfic_fix.config import prefs
+        from calibre_plugins.fimfic_merge_fix_evecouto.config import prefs
         import os
 
         # Gets selected items in Calibre
@@ -304,7 +306,7 @@ class InterfacePlugin(InterfaceAction):
 
     def apply_settings(self):
         """Setting Applying"""
-        from calibre_plugins.fimfic_fix.config import prefs
+        from calibre_plugins.fimfic_merge_fix_evecouto.config import prefs
         # In an actual non trivial plugin, you would probably need to
         # do something based on the settings in prefs
         self.prefs = prefs

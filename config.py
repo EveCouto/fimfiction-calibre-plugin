@@ -5,7 +5,7 @@ from qt.core import (QVBoxLayout, QHBoxLayout, QLabel, QFrame, QWidget,
 import os
 
 
-prefs = JSONConfig('plugins/fimfic_fix_config')
+prefs = JSONConfig('plugins/fimfic_merge_fix_evecouto_config')
 
 prefs.defaults["do_backups"] = False
 prefs.defaults["backup_path"] = ""
