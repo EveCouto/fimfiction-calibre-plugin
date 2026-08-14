@@ -7,7 +7,7 @@ class InterfacePlugin(InterfaceAction):
 
     action_spec = ('FimFic Merge/Fix',
                    None,
-                   'Merge Selected Book',
+                   'Run Main Button Function',
                    None)
 
     def genesis(self):
