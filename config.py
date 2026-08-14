@@ -103,94 +103,120 @@ class ConfigWidget(QWidget):
         self.layout.addWidget(self.backup_spacer)
         self.layout.addSpacing(10)
 
+        # Vertical layout attempt
+        self.checkbox_row = QHBoxLayout()
+        self.checkbow_col_l = QVBoxLayout()
+        self.checkbow_col_r = QVBoxLayout()
+        min_width1 = 120
+        min_width2 = 150
+
         # Merge Metadata Check
         self.merge_check_row = QHBoxLayout()
         self.merge_check_label = QLabel(
             "Check Metadata \non Merge Books?")
+        self.merge_check_label.setMinimumWidth(min_width1)
         self.merge_check_row.addWidget(self.merge_check_label)
         self.merge_check_checkbox = QCheckBox()
         self.merge_check_checkbox.setChecked(prefs["do_check_metadata"])
         self.merge_check_row.addWidget(self.merge_check_checkbox)
-        self.layout.addLayout(self.merge_check_row)
+        self.checkbow_col_l.addLayout(self.merge_check_row)
 
         # Small Spacing
-        self.layout.addSpacing(10)
+        self.checkbow_col_l.addSpacing(10)
 
         # Do Automatic image fix
         self.auto_fix_row = QHBoxLayout()
         self.auto_fix_check_label = QLabel(
             "Auto-run Fix Images \non Merge Books?")
+        self.auto_fix_check_label.setMinimumWidth(min_width1)
         self.auto_fix_row.addWidget(self.auto_fix_check_label)
         self.auto_fix_checkbox = QCheckBox()
         self.auto_fix_checkbox.setChecked(prefs["do_auto_fix"])
         self.auto_fix_row.addWidget(self.auto_fix_checkbox)
-        self.layout.addLayout(self.auto_fix_row)
+        self.checkbow_col_l.addLayout(self.auto_fix_row)
 
         # Small Spacing
-        self.layout.addSpacing(10)
+        self.checkbow_col_l.addSpacing(10)
 
         # Do retry image fix
         self.retry_fix_row = QHBoxLayout()
         self.retry_image_label = QLabel(
             "Always retry images \non Fix Images?")
+        self.retry_image_label.setMinimumWidth(min_width1)
         self.retry_fix_row.addWidget(self.retry_image_label)
         self.retry_image_checkbox = QCheckBox()
         self.retry_image_checkbox.setChecked(prefs["do_retry_fix"])
         self.retry_fix_row.addWidget(self.retry_image_checkbox)
-        self.layout.addLayout(self.retry_fix_row)
-
-        # Image fix Spacer
-        self.layout.addSpacing(10)
-        self.image_fix_spacer = QFrame()
-        self.image_fix_spacer.setFrameShape(QFrame.Shape.HLine)
-        self.image_fix_spacer.setFrameShadow(QFrame.Shadow.Sunken)
-        self.layout.addWidget(self.image_fix_spacer)
-        self.layout.addSpacing(10)
+        self.checkbow_col_l.addLayout(self.retry_fix_row)
 
         # Show merge
         self.show_merge_row = QHBoxLayout()
         self.show_merge_label = QLabel("Show Merge Books:")
+        self.show_merge_label.setMinimumWidth(min_width2)
         self.show_merge_row.addWidget(self.show_merge_label)
         self.show_merge_checkbox = QCheckBox()
         self.show_merge_checkbox.setChecked(prefs["show_merge"])
         self.show_merge_row.addWidget(self.show_merge_checkbox)
-        self.layout.addLayout(self.show_merge_row)
+        self.checkbow_col_r.addLayout(self.show_merge_row)
 
         # Show merge full
         self.show_merge_full_row = QHBoxLayout()
         self.show_merge_full_label = QLabel("Show Merge Books Full:")
+        self.show_merge_full_label.setMinimumWidth(min_width2)
         self.show_merge_full_row.addWidget(self.show_merge_full_label)
         self.show_merge_full_checkbox = QCheckBox()
         self.show_merge_full_checkbox.setChecked(prefs["show_merge_full"])
         self.show_merge_full_row.addWidget(self.show_merge_full_checkbox)
-        self.layout.addLayout(self.show_merge_full_row)
+        self.checkbow_col_r.addLayout(self.show_merge_full_row)
 
         # Show fix
         self.show_fix_row = QHBoxLayout()
         self.show_fix_label = QLabel("Show Fix Images:")
+        self.show_fix_label.setMinimumWidth(min_width2)
         self.show_fix_row.addWidget(self.show_fix_label)
         self.show_fix_checkbox = QCheckBox()
         self.show_fix_checkbox.setChecked(prefs["show_fix"])
         self.show_fix_row.addWidget(self.show_fix_checkbox)
-        self.layout.addLayout(self.show_fix_row)
+        self.checkbow_col_r.addLayout(self.show_fix_row)
 
         # Show fix + retry
         self.show_fix_retry_row = QHBoxLayout()
         self.show_fix_retry_label = QLabel("Show Fix Images + Retry:")
+        self.show_fix_retry_label.setMinimumWidth(min_width2)
         self.show_fix_retry_row.addWidget(self.show_fix_retry_label)
         self.show_fix_retry_checkbox = QCheckBox()
         self.show_fix_retry_checkbox.setChecked(prefs["show_fix_retry"])
         self.show_fix_retry_row.addWidget(self.show_fix_retry_checkbox)
-        self.layout.addLayout(self.show_fix_retry_row)
+        self.checkbow_col_r.addLayout(self.show_fix_retry_row)
 
         # Show config
         self.show_config_row = QHBoxLayout()
         self.show_config_label = QLabel("Show Config Plugin:")
+        self.show_config_label.setMinimumWidth(min_width2)
         self.show_config_row.addWidget(self.show_config_label)
         self.show_config_checkbox = QCheckBox()
         self.show_config_checkbox.setChecked(prefs["show_config"])
         self.show_config_row.addWidget(self.show_config_checkbox)
-        self.layout.addLayout(self.show_config_row)
+        self.checkbow_col_r.addLayout(self.show_config_row)
+
+        # Show Settings Warning
+        self.checkbow_col_r.addSpacing(10)
+        self.show_label = QLabel(
+            "*Restart required for above*")
+        font = self.show_label.font()
+        font.setBold(True)
+        self.show_label.setFont(font)
+        self.show_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.checkbow_col_r.addWidget(self.show_label)
+
+        # Vertical collumn merge
+        self.checkbox_row.addLayout(self.checkbow_col_l)
+        self.checkbox_spacer = QFrame()
+        self.checkbox_spacer.setFrameShape(QFrame.Shape.VLine)
+        self.checkbox_spacer.setFrameShadow(QFrame.Shadow.Sunken)
+        self.checkbox_row.addWidget(self.checkbox_spacer)
+        self.checkbox_row.addLayout(self.checkbow_col_r)
+        self.layout.addLayout(self.checkbox_row)
 
         # Defaults Spacer
         self.layout.addSpacing(10)
