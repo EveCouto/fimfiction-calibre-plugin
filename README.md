@@ -48,6 +48,16 @@ Every time the fix images is run, it will attempt to retry failed images.
 
 \*Note: When ennabled, it will backup (if backup enabled) even if no changes made.\*
 
+### Show Functions
+
+There is 1 checkbox per function available in the plugin. i.e. one for Merge Books, Fix Images, etc.
+
+It changes if each function shows in the submenu of the main toolbar or the right-click menu.
+
+Due to how Calibre functions, Calibre must be restarted for these changes to take effect.
+
+Has no bearing on what the Main Button can do.
+
 ## Merge Books
 
 Select one book in the Calibre library, when Merge is run a file dialog will appear.
