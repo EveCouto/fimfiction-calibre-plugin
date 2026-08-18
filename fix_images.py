@@ -14,7 +14,7 @@ def scan_zip(zip_path: str, file_ext: str, retry: bool) -> dict:
     Args:
         zip_path (str): filepath of zip
         file_ext (str): file extension
-        retry (bool): True if wanting to retry
+        retry (bool): if retry failed
 
     Returns:
         dict: filename -> match(es)
@@ -247,10 +247,12 @@ def fix_images(temp_dir: str, book_path: str,
         book_path (str): path to an epub
         backup (bool): if backups occur
         backup_path (str): backup path
+        retry (bool): if retry failed
 
     Returns:
         str: returns the file path for the fixed book
     """
+
     # Temp path is where the fixed epub will be
     temp_file = os.path.basename(book_path)
     temp_path = os.path.join(temp_dir, "temp-" + temp_file)

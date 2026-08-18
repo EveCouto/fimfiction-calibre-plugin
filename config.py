@@ -6,15 +6,16 @@ import os
 import webbrowser
 
 
+# Sets the name of the prefs file
 prefs = JSONConfig('plugins/fimfic_merge_fix_evecouto_config')
 
+# All the defaults for the prefs
 prefs.defaults["do_backups"] = False
 prefs.defaults["backup_path"] = ""
 prefs.defaults["do_auto_fix"] = False
 prefs.defaults["do_retry_fix"] = False
 prefs.defaults["do_check_metadata"] = False
 prefs.defaults["main_button"] = "Config Plugin"
-
 prefs.defaults["show_merge"] = True
 prefs.defaults["show_merge_full"] = True
 prefs.defaults["show_fix"] = True
@@ -25,6 +26,8 @@ prefs.defaults["show_config"] = True
 class ConfigWidget(QWidget):
 
     def __init__(self):
+        """Draws the Config page"""
+
         # Layout init
         QWidget.__init__(self)
         self.layout = QVBoxLayout()
@@ -115,6 +118,7 @@ class ConfigWidget(QWidget):
         self.checkbox_row = QHBoxLayout()
         self.checkbow_col_l = QVBoxLayout()
         self.checkbow_col_r = QVBoxLayout()
+        # Widths used to make alignment better
         min_width1 = 120
         min_width2 = 150
 
@@ -247,6 +251,8 @@ class ConfigWidget(QWidget):
         self.resize(self.sizeHint())
 
     def set_defaults(self):
+        """Uses the Defaults and sets the page data to show such"""
+
         self.main_button_dropdown.setCurrentText(prefs.defaults["main_button"])
         self.backup_checkbox.setChecked(prefs.defaults["do_backups"])
         self.backup_dir_button.setText(prefs.defaults["backup_path"])
@@ -266,11 +272,16 @@ class ConfigWidget(QWidget):
         self.resize(self.sizeHint())
 
     def check_path(self):
+        """Checks if Backup Dir exists to prevent
+        turning on backups with no dir"""
+
         if self.backup_checkbox.isChecked():
             if not self.backup_dir_button.text():
                 self.backup_checkbox.setChecked(False)
 
     def get_backup_dir(self):
+        """Opens File Dialog for Backup Dir"""
+
         # Opens file dialog and sets button text
         # Default location is downloads unless dir already selected
         default_loc = os.path.expanduser("~/Downloads")
@@ -285,7 +296,8 @@ class ConfigWidget(QWidget):
         self.resize(self.sizeHint())
 
     def show_about_dialog(self):
-        # Shows an about dialog
+        """Shows the About dialog"""
+
         text = get_resources("README.html").decode('utf-8')
         dialog = QDialog(self)
         dialog.setWindowTitle("About FimFiction Ebook Plugin")
@@ -295,24 +307,25 @@ class ConfigWidget(QWidget):
 
         browser = QTextBrowser()
         browser.setHtml(text)
-        browser.setOpenExternalLinks(True)
         layout.addWidget(browser)
 
         dialog.exec()
 
     def open_github(self):
+        """Opens Github in browser"""
+
         webbrowser.open(
             "https://github.com/EveCouto/fimfiction-calibre-plugin")
 
     def save_settings(self):
-        # Updates the preferences file
+        """Updates the preferences file"""
+
         prefs["main_button"] = self.main_button_dropdown.currentText()
         prefs["do_backups"] = self.backup_checkbox.isChecked()
         prefs["backup_path"] = self.backup_dir_button.text()
         prefs["do_check_metadata"] = self.merge_check_checkbox.isChecked()
         prefs["do_auto_fix"] = self.auto_fix_checkbox.isChecked()
         prefs["do_retry_fix"] = self.retry_image_checkbox.isChecked()
-
         prefs["show_merge"] = self.show_merge_checkbox.isChecked()
         prefs["show_merge_full"] = self.show_merge_full_checkbox.isChecked()
         prefs["show_fix"] = self.show_fix_checkbox.isChecked()

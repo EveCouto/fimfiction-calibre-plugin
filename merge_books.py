@@ -1,4 +1,3 @@
-
 import os
 import shutil
 import zipfile
@@ -6,7 +5,17 @@ import xml.etree.ElementTree as ET
 from datetime import datetime
 
 
-def check_metadata(opf1, opf2):
+def check_metadata(opf1: bytes, opf2: bytes):
+    """Compares metadata from opf files
+
+    Args:
+        opf1 (bytes): opf file
+        opf2 (bytes): opf file
+
+    Raises:
+        Exception: metadata not matching
+    """
+
     # Setting up XML parsing
     NS = {"opf": "http://www.idpf.org/2007/opf",
           "dc": "http://purl.org/dc/elements/1.1/"}
@@ -17,6 +26,7 @@ def check_metadata(opf1, opf2):
     root1 = ET.fromstring(opf1)
     root2 = ET.fromstring(opf2)
 
+    # Seperates down to useful info from the opf
     metadata1 = root1.find("opf:metadata", NS)
     metadata2 = root2.find("opf:metadata", NS)
     identifier1 = metadata1.find("dc:identifier", NS)
@@ -26,6 +36,7 @@ def check_metadata(opf1, opf2):
     creator1 = metadata1.find("dc:creator", NS)
     creator2 = metadata2.find("dc:creator", NS)
 
+    # Checks if all the data is the same, if not raises error
     if not (identifier1.text == identifier2.text and
             title1.text == title2.text and
             creator1.text == creator2.text):
@@ -197,6 +208,7 @@ def merge_books(temp_dir: str, original_book_path: str,
     Returns:
         str: file path where the merged epub is
     """
+
     # Temp path is where the merged epub will be.
     temp_file = "temp.epub"
     temp_path = os.path.join(temp_dir, temp_file)

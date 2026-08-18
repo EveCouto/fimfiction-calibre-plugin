@@ -5,18 +5,19 @@ from qt.core import QMenu
 class InterfacePlugin(InterfaceAction):
     name = "Fimfiction Ebook Plugin"
 
-    action_spec = ('FimFic Merge/Fix',
+    action_spec = ("FimFic Merge/Fix",
                    None,
-                   'Run Main Button Function',
+                   "Run Main Button Function",
                    None)
 
     def genesis(self):
         """Sets up the UI elements in Calibre"""
 
+        # Import
         from calibre_plugins.fimfic_merge_fix_evecouto.config import prefs
 
         # Icons
-        icon = get_icons('images/icon.png', "Fimfiction Ebook Plugin")
+        icon = get_icons("images/icon.png", "Fimfiction Ebook Plugin")
         self.qaction.setIcon(icon)
 
         # Main Button Action
@@ -72,9 +73,11 @@ class InterfacePlugin(InterfaceAction):
             )
 
     def do_main_button(self):
-        """Runs the function that the main button is associated with
-        """
+        """Runs the function that the main button is associated with """
+
+        # Import
         from calibre_plugins.fimfic_merge_fix_evecouto.config import prefs
+
         function_dict = {
             "Merge Books": self.do_open_book_merge,
             "Merge Books Full": self.do_open_book_merge_full,
@@ -117,7 +120,7 @@ class InterfacePlugin(InterfaceAction):
         # Ensures items selected in Calibre
         if not rows:
             return error_dialog(
-                self.gui, 'Error', 'Nothing Selected', show=True)
+                self.gui, "Error", "Nothing Selected", show=True)
 
         # List of Calibre IDs used in the actual job
         book_ids = list(map(self.gui.library_view.model().id, rows))
@@ -246,10 +249,10 @@ class InterfacePlugin(InterfaceAction):
         # Ensures only 1 item is slected for merge
         if not rows or len(rows) == 0:
             return error_dialog(
-                self.gui, 'Error', 'Nothing Selected', show=True)
+                self.gui, "Error", "Nothing Selected", show=True)
         elif len(rows) >= 2:
             return error_dialog(
-                self.gui, 'Error', 'More than 1 Book Selected', show=True)
+                self.gui, "Error", "More than 1 Book Selected", show=True)
 
         # Get info on selected item
         row = rows[0]
@@ -265,7 +268,7 @@ class InterfacePlugin(InterfaceAction):
             "EPUB files (*.epub)")
         if not merge_path:
             return error_dialog(
-                self.gui, 'Error', 'No File Selected', show=True)
+                self.gui, "Error", "No File Selected", show=True)
         try:
             # Uses a temp directory to work in
             with TemporaryDirectory() as tdir:
@@ -282,7 +285,7 @@ class InterfacePlugin(InterfaceAction):
                 db.add_format(book_id, "EPUB", merged_epub, replace=True)
         except Exception as e:
             return error_dialog(
-                self.gui, 'Error', f'Error: {e}', show=True)
+                self.gui, "Error", f"Error: {e}", show=True)
 
         if prefs["do_auto_fix"] or full_merge:
             self.start_image_fix(retry=prefs["do_retry_fix"])
@@ -300,13 +303,13 @@ class InterfacePlugin(InterfaceAction):
 
     def open_config(self):
         """Config Running"""
+
         base_plugin_object = self.interface_action_base_plugin
         do_user_config = base_plugin_object.do_user_config
         do_user_config(self.gui)
 
     def apply_settings(self):
         """Setting Applying"""
+        # Import
         from calibre_plugins.fimfic_merge_fix_evecouto.config import prefs
-        # In an actual non trivial plugin, you would probably need to
-        # do something based on the settings in prefs
         self.prefs = prefs
