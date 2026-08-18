@@ -3,6 +3,7 @@ from qt.core import (QVBoxLayout, QHBoxLayout, QLabel, QFrame, QWidget,
                      QComboBox, QCheckBox, QSizePolicy, QFileDialog,
                      QPushButton, QDialog, QTextBrowser, Qt)
 import os
+import webbrowser
 
 
 prefs = JSONConfig('plugins/fimfic_merge_fix_evecouto_config')
@@ -39,20 +40,27 @@ class ConfigWidget(QWidget):
         self.layout.addWidget(self.title_label)
 
         # About Button
-        self.about_button_row = QHBoxLayout()
+        self.plugin_info_row = QHBoxLayout()
         self.about_button = QPushButton("About Plugin")
         self.about_button.setSizePolicy(
             QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
         self.about_button.clicked.connect(self.show_about_dialog)
-        self.about_button_row.addWidget(self.about_button)
-        self.layout.addLayout(self.about_button_row)
+        self.plugin_info_row.addWidget(self.about_button)
 
-        # About Button Spacer
+        # Github Button
+        self.github_button = QPushButton("Github")
+        self.github_button.setSizePolicy(
+            QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
+        self.github_button.clicked.connect(self.open_github)
+        self.plugin_info_row.addWidget(self.github_button)
+        self.layout.addLayout(self.plugin_info_row)
+
+        # Plugin Info Spacer
         self.layout.addSpacing(10)
-        self.about_button_spacer = QFrame()
-        self.about_button_spacer.setFrameShape(QFrame.Shape.HLine)
-        self.about_button_spacer.setFrameShadow(QFrame.Shadow.Sunken)
-        self.layout.addWidget(self.about_button_spacer)
+        self.plugin_info_spacer = QFrame()
+        self.plugin_info_spacer.setFrameShape(QFrame.Shape.HLine)
+        self.plugin_info_spacer.setFrameShadow(QFrame.Shadow.Sunken)
+        self.layout.addWidget(self.plugin_info_spacer)
         self.layout.addSpacing(10)
 
         # Main Button Dropdown
@@ -291,6 +299,10 @@ class ConfigWidget(QWidget):
         layout.addWidget(browser)
 
         dialog.exec()
+
+    def open_github(self):
+        webbrowser.open(
+            "https://github.com/EveCouto/fimfiction-calibre-plugin")
 
     def save_settings(self):
         # Updates the preferences file
