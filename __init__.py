@@ -6,7 +6,7 @@ class FimfictionEbookPlugin(InterfaceActionBase):
     name = "Fimfiction Ebook Plugin"
     version = (1, 1, 1)
     author = "EveCouto"
-    supported_platforms = ["windows"]
+    supported_platforms = ["windows", "linux"]
     description = ("Allows for merging updated epubs " +
                    "and fixing images in FimFiction epub")
     minimum_calibre_version = (9, 11, 0)
