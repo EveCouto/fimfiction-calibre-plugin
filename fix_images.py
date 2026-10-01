@@ -20,7 +20,7 @@ def scan_zip(zip_path: str, file_ext: str, retry: bool) -> dict:
         dict: filename -> match(es)
     """
 
-    pattern = r"(<img src=\"http[^>]*\/>)"
+    pattern = r"(<img [^>]*src=\"http[^>]*\/>)"
     retry_pattern = r"(<a class=[\"']failed-img['\"][^<]*<\/a>)"
     loc_to_match = {}
 
@@ -77,7 +77,11 @@ def get_img_data(img: str) -> dict:
 
     img_link = hidden_link_fix(img)
     img_name = os.path.basename(img_link)
-    new_src = f'<img src="images/{img_name}"/>'
+
+    if "failed-image" in img:
+        new_src = f'<img src="images/{img_name}"/>'
+    else:
+        new_src = img.replace(f'src="{img_link}"', f'src="images/{img_name}"')
 
     return {"orig": img, "link": img_link,
             "name": img_name, "src": new_src}
