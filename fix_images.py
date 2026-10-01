@@ -49,8 +49,7 @@ def hidden_link_fix(link: str) -> str:
     """
 
     # Checks for matches in link
-    pattern = r'url=(.*?)(?=%3F|[\'"])'
-    http_pattern = r'https?://[^\'">\s]+'
+    pattern = r'url=(.*?)(?=%3F|[\'"]|$)'
     matches = re.search(pattern, link)
 
     # Returns unquoted version if a match
@@ -59,10 +58,8 @@ def hidden_link_fix(link: str) -> str:
     else:
         if link.find("?") >= 0:
             return link[link.find("http"):link.find("?")]
-        elif (match := re.search(http_pattern, link)):
-            return match.group(0)
         else:
-            return link[link.find("http"):link.find('"')]
+            return link
 
 
 def get_img_data(img: str) -> dict:
@@ -75,14 +72,18 @@ def get_img_data(img: str) -> dict:
         dict: contains all the img info
     """
 
-    img_link = hidden_link_fix(img)
+    http_pattern = r'https?://[^\'">\s]+'
+    if match := re.search(http_pattern, img):
+        orig_link = match.group(0)
+    img_link = hidden_link_fix(orig_link)
     img_name = os.path.basename(img_link)
 
     if "failed-image" in img:
         new_src = f'<img src="images/{img_name}"/>'
     else:
-        new_src = img.replace(f'src="{img_link}"', f'src="images/{img_name}"')
+        new_src = img.replace(f'src="{orig_link}"', f'src="images/{img_name}"')
 
+    print(img, new_src, img_link)
     return {"orig": img, "link": img_link,
             "name": img_name, "src": new_src}
 
